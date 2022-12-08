@@ -1,0 +1,434 @@
+---
+title             : "The title"
+shorttitle        : "Title"
+
+author: 
+  - name          : "First Author"
+    affiliation   : "1"
+    corresponding : yes    # Define only one corresponding author
+    address       : "Postal address"
+    email         : "my@email.com"
+    role:         # Contributorship roles (e.g., CRediT, https://casrai.org/credit/)
+      - Conceptualization
+      - Writing - Original Draft Preparation
+      - Writing - Review & Editing
+  - name          : "Ernst-August Doelle"
+    affiliation   : "1,2"
+    role:
+      - Writing - Review & Editing
+
+affiliation:
+  - id            : "1"
+    institution   : "Wilhelm-Wundt-University"
+  - id            : "2"
+    institution   : "Konstanz Business School"
+
+authornote: |
+  Add complete departmental affiliations for each author here. Each new line herein must be indented, like this line.
+
+  Enter author note here.
+
+abstract: |
+  One or two sentences providing a **basic introduction** to the field,  comprehensible to a scientist in any discipline.
+  
+  Two to three sentences of **more detailed background**, comprehensible  to scientists in related disciplines.
+  
+  One sentence clearly stating the **general problem** being addressed by  this particular study.
+  
+  One sentence summarizing the main result (with the words "**here we show**" or their equivalent).
+  
+  Two or three sentences explaining what the **main result** reveals in direct comparison to what was thought to be the case previously, or how the  main result adds to previous knowledge.
+  
+  One or two sentences to put the results into a more **general context**.
+  
+  Two or three sentences to provide a **broader perspective**, readily comprehensible to a scientist in any discipline.
+  
+  <!-- https://tinyurl.com/ybremelq -->
+  
+keywords          : "keywords"
+wordcount         : "X"
+
+bibliography      : ["r-references.bib"]
+
+floatsintext      : no
+figurelist        : no
+tablelist         : no
+footnotelist      : no
+linenumbers       : yes
+mask              : no
+draft             : no
+
+documentclass     : "apa6"
+classoption       : "man"
+output            : papaja::apa6_pdf
+---
+
+```{r setup, include = FALSE}
+library("papaja")
+r_refs("r-references.bib")
+library('reticulate')
+library('tidyverse')
+library('broom')
+library('cowplot')
+library('MESS') # for AUCs
+library('lsr') # for effect sizes
+library('pwr') # for power calculations
+library('brms') # for mixed effects modeling
+library('BayesFactor') # for Bayesian t test
+library('jsonlite') #parsing data from sort_trial
+library('afex') #for anova
+
+```
+
+```{r load_and_format_data, echo=FALSE, cache=TRUE}
+pilot.df <- read_csv('../experiments/pilots/scenes/data/jatos_results_batch1.csv');
+
+pilot.search.df <- pilot.df%>%
+  filter(trial_type=='VSScene')%>%
+  mutate(subj_id=subject_identifier)%>%
+  dplyr::select(
+    subj_id,
+    congruent,
+    present,
+    object,
+    RT,
+    correct
+  ) %>%
+  mutate(response = correct==present,
+         RT = as.numeric(RT),
+         correct=correct=='true');
+
+pilot.acc.df <- 
+  pilot.search.df %>%
+  group_by(subj_id) %>%
+  summarise(acc=mean(correct));
+
+pilot.include <- pilot.acc.df %>%
+  filter(acc>0.9)%>%
+  pull(subj_id)
+
+pilot.search.df %>%
+  filter(correct & subj_id %in% pilot.include) %>%
+  group_by(subj_id,present,congruent)%>%
+  summarise(RT=median(RT)) %>%
+  group_by(present,congruent)%>%
+  summarise(RT=median(RT))
+
+pilot.comments.df <- pilot.df  %>% 
+  filter(trial_type=='survey-text') %>%
+  pull(response)
+
+pilot.search_times_by_item <- pilot.search.df %>%
+ filter(correct & subj_id %in% pilot.include) %>%
+ group_by(object,present,congruent)%>%
+  summarise(RT=median(RT)) %>%
+  mutate(present=ifelse(present=='true','present','absent'),
+         congruent=ifelse(congruent=='true','congruent','incongruent'))%>%
+  pivot_wider(names_from=present,values_from=RT);
+
+pilot.search_times_by_subject <- pilot.search.df %>%
+ filter(correct & subj_id %in% pilot.include) %>%
+ group_by(subj_id,present,congruent)%>%
+  summarise(RT=median(RT)) %>%
+  mutate(present=ifelse(present=='true','present','absent'),
+         congruent=ifelse(congruent=='true','congruent','incongruent'))%>%
+  pivot_wider(names_from=present,values_from=RT)
+
+detection_colors = c('#377eb8', '#e41a1c');
+discrimination_colors = c('#4daf4a','#984ea3')
+
+pilot.search_times_by_item%>%
+  ggplot(aes(x=present,y=absent,color=congruent))+
+  geom_abline(slope=1,intercept=0)+
+  geom_point(size=2) +
+  coord_fixed() +
+  scale_x_continuous(limits=c(4200,6200))+
+  scale_y_continuous(limits=c(4200,6200))+
+  # geom_text(aes(label=object))+
+  theme_classic()
+
+ggsave('figures/pilot_scenes_object_scatter.png', width=5, height=4.3)
+```
+
+```{r load_and_format_data, echo=FALSE, cache=TRUE}
+
+library("ggplot2")
+library("cowplot")
+
+# Set up scatterplot
+scatterplot <- ggplot(pilot.search_times_by_item, 
+                      aes(x = present, y = absent, color = congruent)) +
+  geom_abline(slope=1,intercept=0) +
+  geom_point(size = 3, alpha = 0.6) +
+  guides(color = FALSE) +
+  theme(plot.margin = margin())+
+  # coord_fixed() +
+  # scale_x_continuous(limits=c(4200,6200))+
+  # scale_y_continuous(limits=c(4200,6200))+
+  theme_classic()
+
+
+# Define marginal histogram
+marginal_distribution <- function(x, var, group) {
+  ggplot(x, aes_string(x = var, fill = group)) +
+    geom_histogram(bins = 30, alpha = 0.4, position = "identity") +
+    # geom_density(alpha = 0.4, size = 0.1) +
+    guides(fill = FALSE) +
+    theme_void() +
+    theme(plot.margin = margin())
+}
+
+# Set up marginal histograms
+x_hist <- marginal_distribution(pilot.search_times_by_item, "present", "congruent")
+y_hist <- marginal_distribution(pilot.search_times_by_item, "absent", "congruent") +
+  coord_flip()
+
+# Align histograms with scatterplot
+aligned_x_hist <- align_plots(x_hist, scatterplot, align = "v")[[1]]
+aligned_y_hist <- align_plots(y_hist, scatterplot, align = "h")[[1]]
+
+# Arrange plots
+plot_grid(
+  aligned_x_hist
+  , NULL
+  , scatterplot
+  , aligned_y_hist
+  , ncol = 2
+  , nrow = 2
+  , rel_heights = c(0.2, 1)
+  , rel_widths = c(1, 0.2)
+)
+
+ggsave('figures/pilot_scenes_object_scatter_with_marginal.png', width=5, height=5)
+
+
+### by person
+
+# Set up scatterplot
+scatterplot <- ggplot(pilot.search_times_by_subject, 
+                      aes(x = present, y = absent, color = congruent)) +
+  geom_abline(slope=1,intercept=0) +
+  geom_point(size = 3, alpha = 0.6) +
+  guides(color = FALSE) +
+  theme(plot.margin = margin())+
+  # coord_fixed() +
+  # scale_x_continuous(limits=c(4200,6200))+
+  # scale_y_continuous(limits=c(4200,6200))+
+  theme_classic()
+
+
+# Define marginal histogram
+marginal_distribution <- function(x, var, group) {
+  ggplot(x, aes_string(x = var, fill = group)) +
+    geom_histogram(bins = 30, alpha = 0.4, position = "identity") +
+    # geom_density(alpha = 0.4, size = 0.1) +
+    guides(fill = FALSE) +
+    theme_void() +
+    theme(plot.margin = margin())
+}
+
+# Set up marginal histograms
+x_hist <- marginal_distribution(pilot.search_times_by_subject, "present", "congruent")
+y_hist <- marginal_distribution(pilot.search_times_by_subject, "absent", "congruent") +
+  coord_flip()
+
+# Align histograms with scatterplot
+aligned_x_hist <- align_plots(x_hist, scatterplot, align = "v")[[1]]
+aligned_y_hist <- align_plots(y_hist, scatterplot, align = "h")[[1]]
+
+# Arrange plots
+plot_grid(
+  aligned_x_hist
+  , NULL
+  , scatterplot
+  , aligned_y_hist
+  , ncol = 2
+  , nrow = 2
+  , rel_heights = c(0.2, 1)
+  , rel_widths = c(1, 0.2)
+)
+
+ggsave('figures/pilot_scenes_subject_scatter_with_marginal.png', width=5, height=5)
+```
+
+```{r format_data_for_Clare, echo=FALSE, cache=TRUE}
+pilot.df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  select(subj_id,target,context,context_string,response,presence_key,RT,correct, max_p, present) %>%
+  mutate(response = response==presence_key,
+         congruency = context==target) %>%
+  write.csv('../experiments/pilots/letters/data/forClare.csv')
+```
+
+
+```{r plot_visibility_per_frame, echo=FALSE, cache=TRUE}
+
+
+frame_number = seq(100);
+time = 1000*frame_number/15;
+n=20;
+p=0.35;
+steepness = 0.1
+vis = p/(1+exp(-steepness*(frame_number-n)));
+
+df <- data.frame(frame_number,time,vis) %>%
+    mutate(absent = 0,
+           present = vis) %>% 
+  gather(condition,vis, absent:present) %>%
+  mutate(condition= factor(condition,levels=c('present','absent')))
+
+p <- df %>% 
+  ggplot(aes(x=time,y=vis, color=condition)) + 
+  geom_line(size=2) + 
+  theme_classic() + 
+  labs(x='time (ms)', y='visibility') +
+  scale_color_manual(values=c("#377eb8", "#e41a1c"))+
+  theme(legend.position = "none");
+
+ggsave('figures/visibility.png',p,width=4,height=1.5)
+
+
+```
+
+```{r descriptives, echo=FALSE, cache=TRUE}
+pilot.descriptives <- pilot.df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  mutate(cong = target==context,
+         resp = response==presence_key)%>%
+  group_by(subj_id,cong) %>%
+  summarise(accuracy=mean(correct),
+            resp_bias=mean(resp),
+            RT=median(RT),
+            hit_rate = (sum(correct & present)+1)/(sum(present)+1),
+            fa_rate = (sum(!correct & !present)+1)/(sum(!present)+1),
+            d = qnorm(hit_rate)-qnorm(fa_rate),
+            c = -0.5*(qnorm(hit_rate)+qnorm(fa_rate)))
+
+pilot.descriptives_by_letter <- pilot.df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  mutate(cong = target==context,
+         resp = response==presence_key)%>%
+  group_by(subj_id,target) %>%
+  summarise(accuracy=mean(correct),
+            resp_bias=mean(resp),
+            RT=median(RT),
+            hit_rate = (sum(correct & present)+1)/(sum(present)+1),
+            fa_rate = (sum(!correct & !present)+1)/(sum(!present)+1),
+            d = qnorm(hit_rate)-qnorm(fa_rate),
+            c = -0.5*(qnorm(hit_rate)+qnorm(fa_rate)))
+
+
+N_perm <- 1000;
+bootstrap_error <- function(x, N_perm) {
+  N <- length(x)
+  medians = c();
+  for (i in 1:N_perm) {
+    medians = c(medians,sample(x,replace=TRUE,size=N)%>%median())
+  };
+  return(sd(medians))
+}
+
+pilot.descriptives_group <- pilot.descriptives %>%
+  filter(is.finite(d))%>%
+  group_by(cong) %>%
+  summarise(se_bias = se(resp_bias),
+            mean_bias = mean(resp_bias),
+            se_accuracy = se(accuracy),
+            mean_accuracy = mean(accuracy),
+            sem_RT = bootstrap_error(RT,N_perm),
+            median_RT = median(RT),
+            mean_d = mean(d),
+            se_d = se(d),
+            mean_c = mean(c),
+            se_c = se(c));
+
+pilot.descriptives_by_letter_group <- pilot.descriptives_by_letter %>%
+  filter(is.finite(d))%>%
+  group_by(target) %>%
+  summarise(se_bias = se(resp_bias),
+            mean_bias = mean(resp_bias),
+            se_accuracy = se(accuracy),
+            mean_accuracy = mean(accuracy),
+            sem_RT = bootstrap_error(RT,N_perm),
+            median_RT = median(RT),
+            mean_d = mean(d),
+            se_d = se(d),
+            mean_c = mean(c),
+            se_c = se(c));
+
+p <- pilot.descriptives_group %>% 
+  mutate(cong=ifelse(cong,'congruent','incongruent')) %>%
+  ggplot(aes(x=cong,y=median_RT)) +
+    geom_bar(position='dodge',stat='identity') +
+    theme_classic() + 
+  geom_errorbar(aes(ymin=median_RT-sem_RT,ymax=median_RT+sem_RT),
+                linetype="solid", width=0.2, color="black",position=position_dodge(.9)) + 
+  labs(x='context', y='median RT (ms)',fill='response')
+
+```
+
+```{r RT_by_resp, echo=FALSE, cache=TRUE}
+
+pilot.RT_by_resp <- pilot.df %>%
+  filter((test_part=='test1' | test_part=='test2')) %>%
+  mutate(cong = target==context,
+         resp = response==presence_key)%>%
+  group_by(subj_id,cong,resp) %>%
+  summarise(RT=mean(RT)) 
+
+pilot.RT_by_resp_group <- pilot.RT_by_resp %>%
+  group_by(cong,resp) %>%
+  summarise(se_RT = bootstrap_error(RT,N_perm),
+            median_RT=median(RT));
+
+p <- pilot.RT_by_resp_group %>% 
+  mutate(resp=ifelse(resp, 'present','absent'),
+         cong=ifelse(cong,'congruent','incongruent')) %>%
+  ggplot(aes(x=cong,fill=resp,y=median_RT)) +
+    geom_bar(position='dodge',stat='identity') +
+    theme_classic() + 
+  geom_errorbar(aes(ymin=median_RT-se_RT,ymax=median_RT+se_RT),
+                linetype="solid", width=0.2, color="black",position=position_dodge(.9)) + 
+  labs(x='context', y='median RT (ms)',fill='response')
+
+ggsave('figures/RT_by_cong_resp_pilot2.png',p,width=5,height=4.5)
+
+
+pilot.RT_by_resp_correct_only_group <- pilot.df %>%
+  filter((test_part=='test1' | test_part=='test2') & correct) %>%
+  mutate(cong = target==context,
+         resp = response==presence_key)%>%
+  group_by(subj_id,cong,resp) %>%
+  summarise(RT=mean(RT)) %>%
+  group_by(cong,resp) %>%
+  summarise(se_RT = bootstrap_error(RT,N_perm),
+            median_RT=median(RT));
+
+p <- pilot.RT_by_resp_correct_only_group %>% 
+  mutate(resp=ifelse(resp, 'present','absent'),
+         cong=ifelse(cong,'congruent','incongruent')) %>%
+  ggplot(aes(x=cong,fill=resp,y=median_RT)) +
+    geom_bar(position='dodge',stat='identity') +
+    theme_classic() + 
+  geom_errorbar(aes(ymin=median_RT-se_RT,ymax=median_RT+se_RT),
+                linetype="solid", width=0.2, color="black",position=position_dodge(.9)) + 
+  labs(x='context', y='median RT (ms)',fill='response')
+
+ggsave('figures/RT_by_cong_resp_correct_only_pilot2.png',p,width=5,height=4.5)
+
+```
+# Results
+
+# Discussion
+
+
+\newpage
+
+# References
+
+\begingroup
+\setlength{\parindent}{-0.5in}
+\setlength{\leftskip}{0.5in}
+
+<div id="refs" custom-style="Bibliography"></div>
+\endgroup

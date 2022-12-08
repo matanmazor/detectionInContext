@@ -1,0 +1,438 @@
+---
+title             : "Detection in Context - pre-registration document"
+shorttitle        : "Detection in Context - pre-registration document"
+
+author: 
+  - name          : "Matan Mazor"
+    affiliation   : "1,2"
+    corresponding : yes    # Define only one corresponding author
+    address       : "Malet Street, London WC1E 7HX"
+    email         : "mtnmzor@gmail.com"
+  #   role:         # Contributorship roles (e.g., CRediT, https://casrai.org/credit/)
+  #     - Conceptualization
+  #     - Writing - Original Draft Preparation
+  #     - Writing - Review & Editing
+  
+    
+  - name          : "Clare Press"
+    affiliation   : "1,2"
+    # role:
+    #   - Writing - Review & Editing
+
+affiliation:
+  - id            : "1"
+    institution   : "Birkbeck, University of London"
+  - id            : "2"
+    institution   : "Wellcome Centre for Human Neuroimaging, UCL"
+
+
+abstract: |
+  
+  
+  
+  <!-- https://tinyurl.com/ybremelq -->
+  
+keywords          : "keywords"
+wordcount         : "X"
+
+bibliography      : ["r-references.bib"]
+
+floatsintext      : no
+figurelist        : no
+tablelist         : no
+footnotelist      : no
+linenumbers       : yes
+mask              : no
+draft             : no
+
+documentclass     : "apa6"
+classoption       : "man"
+output            : papaja::apa6_word
+---
+
+```{r setup, include = FALSE}
+library("papaja")
+library('pwr')
+library('dplyr')
+library('tidyverse')
+library('broom')
+knitr::opts_chunk$set(fig.pos = "!H", out.extra = "")
+```
+
+```{r analysis-preferences}
+# Seed for random number generation
+set.seed(42)
+knitr::opts_chunk$set(cache.extra = knitr::rand_seed)
+```
+
+# Motivation
+
+Perceptual decisions are influenced not only by incoming sensory input, but also by our own expectations and motivations. For example, stimuli that are predictable in a given context can appear sharper [@rossel2022makes] and are more likely to be perceived when presented at near-threshold intensity [@yon2020action; @reznik2014lateralized]. Apparently opposite effects are also sometimes observed, whereby expected events are perceived less readily than their unexpected counterparts [@press2020perceptual]. There are many unanswered questions concerning what contributes to the influence of expectations on perceptual experience. One likely contributing factor concerns whether subjects believe (explicitly or implicitly) that they will detect expected or unexpected events more readily, and whether they are able to utilize these beliefs in guiding their information gathering behaviour. 
+
+In two previous studies we used the timing of decisions about absence in a detection task to investigate implicit beliefs about facilitating effects of expectation on perception. We used a paradigm where expected events are detected more readily than unexpected events: subjects are faster to detect letters when surrounded by other letters that make it into a meaningful word. We replicated this effect of context on the timing of decisions about presence, but found that context did not significantly modulate the efficiency of decisions about target absence. This finding is consistent with the absence of metacognitive representation of the facilitating effects of expectations on perception.
+
+In this third Experiment, we tested the generalizability of this finding to a setting where expectation has the oppposite effect on perception. In a previous Visual Search Experiment [@mazor2022prospective], searches were faster on average when the target was semantically incongruent relative to the distractors. In that study, however, the target was always present, and participants' task was to locate it in the array.  Here, we ask whether a similar advantage for target-distractor incongruency will be observed in decisions about the absence of a target.  
+
+<!-- By examining the timing of decisions about target absence in the very first trials of the task [@mazor2022efficient], we distill stimulus-specific search termination mechanisms from generic criterion-adjustment heuristics [@chun1996just].  -->
+
+
+# Methods
+We report how we determined our sample size, all data exclusions (if any), all manipulations, and all measures in the study. <!-- 21-word solution (Simmons, Nelson & Simonsohn, 2012; retrieved from http://ssrn.com/abstract=2160588) -->
+
+## Participants
+
+The research complies with all relevant ethical regulations, and was approved by the Research Ethics Committee of Birkbeck, University of London (study ID number 1812000). Participants will be recruited via Prolific, and will give informed consent prior to their participation. To be eligible to take part in this study, their Prolific approval rate will need to be 95% or higher, their reported first language English, their vision normal or corrected to normal, and their age between 18 and 60. We will collect data until we reach 150 included participants for each hypothesis (after applying our pre-registered exclusion criteria), or until we collect a total of 220 participants. The entire experiment will take 12 minutes to complete. Participants will be paid £1.80 for their participation, equivalent to an hourly wage of £9.
+
+
+## Procedure
+
+Participants will first be instructed about the visual search task. Specifically, that their task is to report, as accurately and quickly as possible, whether a target stimulus was present (press 'J') or absent (press 'F'). Then, practice trials will be delivered, in which the target stimulus is a rotated T and distractors are L's. The purpose of the practice trials is to familiarize participants with the structure of the task. For these practice trials the number of items will always be 3. Practice trials will be delivered in small blocks of 6 trials each, and the main part of the experiment will start only once participants respond correctly on at least five trials in a block (see Figure \@ref(fig:design)). 
+
+
+```{r design, echo=FALSE, fig.cap="Experimental design. Top panel: each visual search trial will start with a screen indicating the target stimulus. The search display will remain visible until a response is recorded. To motivate accurate responses, the feedback screen will remain visible for one second following correct responses and for four seconds following errors. Middle panel: after reading the instructions, participants will practice the visual search task in blocks of 6 trials, until they reach an accuracy level of 5/6 correct or higher (at most one error per block of 6 trials). Bottom panel: the main part of the experiment will comprise six blocks of 16 trials each, in which the target will be a 3 or an E, set size will be 3 or 12, and distractors will be letters or numbers.", out.width = '60%'}
+knitr::include_graphics("figures/designVS2.png")
+```
+
+The main part of the experiment will comprise two conditions (searching for the letter E, or for the digit 3), presented in six blocks. The order of conditions will be counterbalanced across participants. 
+
+Set size (3 or 12), distractor set (the digits 8 and 2 or the letters A and H), and target presence will be manipulated independently within a block. The first four trials in the third and sixth blocks will be target-absent trials: 3 letter, 12 letters, 3 digits, and 12 digits. Distractors were chosen to be equally similar to the two targets in terms of the number of lines that need to be added and/or subtracted in order to get from the target letter to each of the distractors. We were able to keep both letter distractors (A and H) symmetric. Since the two targets are perfect mirror images of each other, this ensures that visual similarity to both letter targets is identical. In the case of digit distractors, however, the digit 8 is symmetric but the digit 2 is not. As a result, differences in visual search efficiency between the two targets may still be affected by visual similarity (for example, the digits 2 and 3 are both perceived as facing the left, but the letter E is facing the right). Importantly, this is the case when searching among digits, but not among letters. 
+
+### Randomization
+
+The order and timing of experimental events will be determined pseudo-randomly by the Mersenne Twister pseudorandom number generator, initialized in a way that ensures registration time-locking [@mazor2019novel]. 
+
+## Data analysis
+
+### Rejection criteria
+
+Participants will be excluded for having overall accuracy below 75%, or for having extremely fast or slow reaction times in one or more of the conditions (below 100 milliseconds or above 5 seconds in more than 25% of the trials). 
+
+Error trials, and trials with response time below 100 milliseconds or above 5 second will be excluded from the response-time analysis.
+
+
+### Hypotheses and analysis plan
+
+
+Subject-wise target-presence and target-absence search slopes will be extracted for the four target x distractors combinations by fitting a linear regression model to the reaction time data with one intercept and one set-size term. Our analysis will focus on the difference in search slopes as a function of target-distractor congruency, separately for target-present and target-absent responses. 
+
+Analysis will comprise a comparison between target-present search slopes in congruent and incongruent conditions (H1), a comparison between target-absent search slopes in congruent and incongruent conditions  (H2), a test for an interaction between target presence and congruency on search slopes (H3), a test for a main effect of congruency on miss rate (H4), and a test for an interaction between congruency and set size on miss rate (H5). 
+
+H1a-H5a will be identical to H1-H5, but restricted to letter distractors only. H1b-H5b will the identical to H1-H5, but restricted to number distractors only. We include these tests to make sure any observed difference between congruent and incongruent trials is not driven by an asymmetry in visual similarity relative to one set of distractors.
+
+
+*Hypothesis 1 (search slopes: target-present trials)*: Search-time slopes will be extracted from target-present trials in the congruent and incongruent target conditions (correct responses only). We will test the null hypothesis that the slopes are identical, using a within-subject t-test. Following @mazor2022prospective, we expect slopes to be steeper when the target and distractors are semantically similar. 
+
+*Hypothesis 2 (search slopes: target-absent trials)*: Search-time slopes will be extracted from target-absent trials in the congruent and incongruent target conditions (correct responses only). We will test the null hypothesis that the slopes are identical, using a within-subject t-test. 
+
+*Hypothesis 3 (search slopes in presence vs. absence)*: We will test the interaction between target presence and target-distractor congruency on search slopes. In a self-terminating serial search, target-absent search slopes are expected to be twice as steep as target-present slopes, and so any difference between slopes is also expected to be twice as large. We will therefore contrast the difference in target-absent search slopes with double the difference in target-present search slopes, using a within-subject t-test. We would interpret a significant modulation, such that the effect is stronger in target-presence trials, as evidence for a failure to use metacognitive knowledge about expectation effects in decisions about absence. 
+
+*Hypothesis 4 (miss rate)*: If subjects do not properly adapt their search termination strategy as a function of target-distractor congruency, this may result in a higher miss rate (the relative number of error trials in which the target is present but subjects decide it is absent). We will test for such differences, using a within-subject t-test. 
+
+*Hypothesis 5 (miss rate by set size)*:  If subjects do not properly adapt their search termination strategy as a function of target-distractor congruency, any difference in miss rate between the two conditions should be more pronounced in higher set sizes. We will test for such an interaction, using a within-subject t-test on the difference between miss rates in set sizes 12 and 3. 
+
+We did not power our experiment to be sensitive to effects in the very first trials of the experiment, which can be noisy at the single-subject level. However, in designing the experiment we made sure that the first trials of each condition will be target-absent trials. We will utilize this design feature in an exploratory analysis to disentangle pre-existing and dynamically acquired search termination strategies [@mazor2022efficient].
+
+## Statistical power
+
+Statistical power calculations were performed using the R-pwr package [@R-pwr].
+
+With 150 included participants, we will have statistical power of 95% to detect effects of `r printnum(pwr.t.test(power=0.95,n=150,sig.level=0.05, type='paired')%>%'$'(d))` standard deviations in a repeated measured t-test. 
+
+# Pilot data and analysis
+
+## Pilot Experiment
+
+We used `r cite_r(file = "r-references.bib", pkgs = c("dplyr", "ggplot2", "tidyverse","papaja","broom"), withhold = FALSE)` for all our analyses.
+
+```{r load_pilot_data, echo=FALSE, cache=TRUE, warning=FALSE}
+
+Evs3Pilot.df <- read.csv('..\\experiments\\pilots\\EsAndThrees\\data\\jatos_results_longPause.txt',na.strings=c(""," ","NA")) %>%
+  filter(trial_type=='p5vs_yn' & test_part=='main') %>%
+  mutate(subj_id=subject_identifier,
+         RT=as.numeric(RT),
+         set_size=as.numeric(set_size),
+         correct = correct=='true',
+         target_present = target_present=='true',
+         block=as.numeric(block),
+         search_type=ifelse(search_type=='threeInNumm','threeInNum',search_type))%>%
+  dplyr::select(subj_id,three_first,RT,correct,set_size,target_present,search_type, block, test_part)
+
+
+Evs3Pilot.time_taken <-read.csv('..\\experiments\\pilots\\EsAndThrees\\data\\prolific_export_longPause.csv',na.strings=c(""," ","NA")) %>%
+  filter(Status=='APPROVED') %>%
+  pull(Time.taken)
+
+Evs3Pilot.summary_stats = Evs3Pilot.df %>%
+  group_by(subj_id) %>%
+  summarise(acc=mean(correct),
+            nerrors_first = sum(!correct & test_part=='absence1'),
+            RT25=quantile(RT,0.25),
+            RT50=quantile(RT,0.50),
+            RT75=quantile(RT,0.75))
+
+Evs3Pilot.included = Evs3Pilot.summary_stats %>%
+  filter(acc>=0.75 &
+           RT25>100 &
+           RT75<5000) %>%
+  pull(subj_id)
+
+N_total <- Evs3Pilot.df$subj_id%>%unique()%>%length()
+
+Evs3Pilot.congSlopes <- Evs3Pilot.df %>%
+  filter(subj_id %in% Evs3Pilot.included &
+           correct &
+           RT>100 &
+           RT<5000) %>%
+  mutate(cong=ifelse(search_type %in% c('EinLet','threeInNum'),'cong','incong')) %>%
+  group_by(subj_id,cong, target_present) %>%
+  do(model=lm(RT~set_size,data=.)) %>%
+  mutate(tidys=list(broom::tidy(model))) %>%
+  unnest(tidys) %>%
+  filter(term=='set_size') %>%
+  dplyr::select(subj_id,cong,target_present,estimate) %>%
+  spread(cong,estimate) %>%
+  mutate(diff=cong-incong)
+
+Evs3Pilot.congSlopesTests <- Evs3Pilot.congSlopes %>%
+  dplyr::select(subj_id,target_present,diff) %>%
+  spread(target_present,diff,sep='_') %>%
+  rename(H1 = target_present_TRUE,
+         H2 = target_present_FALSE) %>%
+  mutate(H3=H1*2-H2)
+
+Evs3Pilot.acc <- Evs3Pilot.df %>%
+  filter(subj_id %in% Evs3Pilot.included & target_present) %>%
+  mutate(cong=ifelse(search_type %in% c('EinLet','threeInNum'),'cong','incong')) %>%
+  group_by(subj_id,cong, set_size) %>%
+  summarise(acc=mean(correct)) %>% 
+  group_by(subj_id) %>%
+  summarise(
+    acc_cong = mean(acc[cong=='cong']),
+    acc_incong = mean(acc[cong=='incong']),
+    set_size_effect_cong = acc[cong=='cong' & set_size==12]-
+      acc[cong=='cong' & set_size==3],
+    set_size_effect_incong = acc[cong=='incong' & set_size==12]-
+      acc[cong=='incong' & set_size==3],
+    set_size_effect =  acc[set_size==12]-
+      acc[set_size==3]
+  ) %>%
+  mutate(
+    H4 = acc_incong-acc_cong,
+    H5 = set_size_effect_incong-set_size_effect_cong
+  )
+  
+Evs3Pilot.letters.congSlopes <- Evs3Pilot.df %>%
+  filter(subj_id %in% Evs3Pilot.included &
+           correct &
+           RT>100 &
+           RT<5000 &
+           search_type %in% c('EinLet', 'threeInLet')) %>%
+  mutate(cong=ifelse(search_type %in% c('EinLet','threeInNum'),'cong','incong')) %>%
+  group_by(subj_id,cong, target_present) %>%
+  do(model=lm(RT~set_size,data=.)) %>%
+  mutate(tidys=list(broom::tidy(model))) %>%
+  unnest(tidys) %>%
+  filter(term=='set_size') %>%
+  dplyr::select(subj_id,cong,target_present,estimate) %>%
+  spread(cong,estimate) %>%
+  mutate(diff=cong-incong)
+
+Evs3Pilot.letters.congSlopesTests <- Evs3Pilot.letters.congSlopes %>%
+  dplyr::select(subj_id,target_present,diff) %>%
+  spread(target_present,diff,sep='_') %>%
+  rename(H1 = target_present_TRUE,
+         H2 = target_present_FALSE) %>%
+  mutate(H3=H1*2-H2)
+
+
+Evs3Pilot.letters.acc <- Evs3Pilot.df %>%
+  filter(subj_id %in% Evs3Pilot.included & target_present&
+           search_type %in% c('EinLet', 'threeInLet')) %>%
+  mutate(cong=ifelse(search_type %in% c('EinLet','threeInNum'),'cong','incong')) %>%
+  group_by(subj_id,cong, set_size) %>%
+  summarise(acc=mean(correct)) %>% 
+  group_by(subj_id) %>%
+  summarise(
+    acc_cong = mean(acc[cong=='cong']),
+    acc_incong = mean(acc[cong=='incong']),
+    set_size_effect_cong = acc[cong=='cong' & set_size==12]-
+      acc[cong=='cong' & set_size==3],
+    set_size_effect_incong = acc[cong=='incong' & set_size==12]-
+      acc[cong=='incong' & set_size==3],
+    set_size_effect = acc[set_size==12]-acc[set_size==3],
+    set_size_effect = acc[set_size==12]-acc[set_size==3]
+
+  ) %>%
+  mutate(
+    H4 = acc_incong-acc_cong,
+    H5 = set_size_effect_incong-set_size_effect_cong
+  )
+
+Evs3Pilot.numbers.congSlopes <- Evs3Pilot.df %>%
+  filter(subj_id %in% Evs3Pilot.included &
+           correct &
+           RT>100 &
+           RT<5000 &
+           search_type %in% c('EinNum', 'threeInNum')) %>%
+  mutate(cong=ifelse(search_type %in% c('EinLet','threeInNum'),'cong','incong')) %>%
+  group_by(subj_id,cong, target_present) %>%
+  do(model=lm(RT~set_size,data=.)) %>%
+  mutate(tidys=list(broom::tidy(model))) %>%
+  unnest(tidys) %>%
+  filter(term=='set_size') %>%
+  dplyr::select(subj_id,cong,target_present,estimate) %>%
+  spread(cong,estimate) %>%
+  mutate(diff=cong-incong)
+
+Evs3Pilot.numbers.congSlopesTests <- Evs3Pilot.numbers.congSlopes %>%
+  dplyr::select(subj_id,target_present,diff) %>%
+  spread(target_present,diff,sep='_') %>%
+  rename(H1 = target_present_TRUE,
+         H2 = target_present_FALSE) %>%
+  mutate(H3=H1*2-H2)
+
+Evs3Pilot.numbers.acc <- Evs3Pilot.df %>%
+  filter(subj_id %in% Evs3Pilot.included & target_present&
+           search_type %in% c('EinNum', 'threeInNum')) %>%
+  mutate(cong=ifelse(search_type %in% c('EinLet','threeInNum'),'cong','incong')) %>%
+  group_by(subj_id,cong, set_size) %>%
+  summarise(acc=mean(correct)) %>% 
+  group_by(subj_id) %>%
+  summarise(
+    acc_cong = mean(acc[cong=='cong']),
+    acc_incong = mean(acc[cong=='incong']),
+    set_size_effect_cong = acc[cong=='cong' & set_size==12]-
+      acc[cong=='cong' & set_size==3],
+    set_size_effect_incong = acc[cong=='incong' & set_size==12]-
+      acc[cong=='incong' & set_size==3],
+   set_size_effect = acc[set_size==12]-acc[set_size==3]
+  ) %>%
+  mutate(
+    H4 = acc_incong-acc_cong,
+    H5 = set_size_effect_incong-set_size_effect_cong
+  )
+
+N_perm <- 1000;
+bootstrap_error <- function(x, N_perm) {
+  N <- length(x)
+  medians = c();
+  for (i in 1:N_perm) {
+    medians = c(medians,sample(x,replace=TRUE,size=N)%>%median())
+  };
+  return(sd(medians))
+}
+
+Evs3Pilot.RTplot <- Evs3Pilot.df %>%
+  filter(correct & subj_id %in% Evs3Pilot.included) %>%
+  group_by(target_present, 
+           search_type,set_size, 
+           subj_id) %>%
+  summarise(RT=mean(RT)) %>%
+  group_by(target_present,
+           search_type,
+           set_size)%>%
+  summarise(sem_RT=bootstrap_error(RT,N_perm),
+            median_RT=mean(RT))%>%
+  mutate(target=factor(substr(search_type,0,1),
+                       levels=c('E','t'), labels=c('E','3')),
+         distractors=factor(ifelse(search_type %in% c('EinLet', 'threeInLet'),
+                                   'letters', 'numbers'),
+                            levels=c('letters','numbers')),
+         target_present=factor(ifelse(target_present,'present','absent'),
+                               levels=c('present','absent'))
+         )%>%
+  ggplot(aes(x=set_size,y=median_RT,color=target,fill=target)) +
+  geom_line(size=1) +
+  geom_point(shape=21,size=4)+
+  facet_grid(cols=vars(target_present), rows=vars(distractors))+
+  scale_fill_manual(values = c("black","#377eb8"))+
+  scale_color_manual(values = c("black","#377eb8"))+
+  scale_linetype_manual(values=c("solid","21"))+
+  geom_errorbar(aes(ymin=median_RT-sem_RT,ymax=median_RT+sem_RT),linetype="solid", width=1.2, color="black") +
+  # facet_grid(cols = vars(test_part),
+  #            labeller = labeller(test_part = block_names))+
+  labs(x='set size',y='median RT (ms)', title='Pilot: all trials') +
+  theme_bw()+
+  scale_x_continuous(limits=c(2,13),breaks = c(3,12))+
+  theme(legend.position='none',
+        legend.background = element_rect(fill=NA))+
+  guides(color = FALSE, linetype=FALSE)
+
+ggsave('figures/Esand3sPilot.png',Evs3Pilot.RTplot,width=5,height=4.5)
+
+Evs3Pilot.accPlot <- Evs3Pilot.df %>%
+  filter(subj_id %in% Evs3Pilot.included) %>%
+  group_by(target_present, 
+           search_type,set_size, 
+           subj_id) %>%
+  summarise(acc=mean(correct)) %>%
+  group_by(target_present,
+           search_type,
+           set_size)%>%
+  summarise(sd_acc=sd(acc),
+            mean_acc=mean(acc))%>%
+  mutate(target=factor(substr(search_type,0,1),
+                       levels=c('E','t'), labels=c('E','3')),
+         distractors=factor(ifelse(search_type %in% c('EinLet', 'threeInLet'),
+                                   'letters', 'numbers'),
+                            levels=c('letters','numbers')),
+         target_present=factor(ifelse(target_present,'present','absent'),
+                               levels=c('present','absent'))
+  )%>%
+  ggplot(aes(x=set_size,y=mean_acc,color=target,fill=target)) +
+  geom_line(size=1) +
+  geom_point(shape=21,size=4)+
+  facet_grid(cols=vars(target_present), rows=vars(distractors))+
+  scale_fill_manual(values = c("black","#377eb8"))+
+  scale_color_manual(values = c("black","#377eb8"))+
+  scale_linetype_manual(values=c("solid","21"))+
+  # geom_errorbar(aes(ymin=median_RT-sem_RT,ymax=median_RT+sem_RT),linetype="solid", width=1.2, color="black") +
+  # facet_grid(cols = vars(test_part),
+  #            labeller = labeller(test_part = block_names))+
+  labs(x='set size',y='mean accuracy', title='Pilot: all trials') +
+  theme_bw()+
+  scale_x_continuous(limits=c(2,13),breaks = c(3,12))+
+  theme(legend.position='none',
+        legend.background = element_rect(fill=NA))+
+  guides(color = FALSE, linetype=FALSE)
+
+ggsave('figures/Esand3sAccPilot.png',Evs3Pilot.accPlot,width=5,height=4.5)
+
+```
+
+## Participants
+
+We collected data from a total of `r N_total` participants, recruited on Prolific. The entire experiment took 13:15 minutes to complete (median completion time: 13:15 minutes). Participants were paid £1.80 for their participation, equivalent to an hourly wage of £8.15. The data of `r Evs3Pilot.included%>%length()` participants met our inclusion criteria and were used for the main analysis.
+
+## Material
+
+## Procedure
+
+The pilot task followed the procedure described in the Methods section above. 
+
+## Results
+
+Overall accuracy was at `r Evs3Pilot.summary_stats$acc%>%mean()%>%printnum()` percent correct (standard deviation =`r Evs3Pilot.summary_stats$acc%>%sd()%>%printnum()`). The median reaction time was `r Evs3Pilot.summary_stats$RT50%>%median()%>%round()` ms. In testing Hypotheses 1-3, only correct trials with response time between 100 and 5000 ms were included. All trials were included in testing Hypotheses 4 and 5.
+
+```{r pilot, echo=FALSE, fig.cap="Results from a pilot experiment. Error bars represent the standard error of the mean. ", out.width = '60%'}
+knitr::include_graphics("figures/pilotEs3sLongPause.png")
+```
+
+*Hypothesis 1 (search slopes: target-present trials)*: Target-present search slopes were steeper when the target and distractors were of the same semantic category (mean slope: `r Evs3Pilot.congSlopes%>%filter(target_present)%>%pull(cong)%>%mean()%>%round()` ms/item) compared to when it was unfamiliar (`r Evs3Pilot.congSlopes%>%filter(target_present)%>%pull(incong)%>%mean()%>%round()` ms/item; `r Evs3Pilot.congSlopesTests$H1%>%t.test()%>%apa_print()%>%'$'(full_result)`). The same qualitative result was observed when restricting analysis to number distractors (`r Evs3Pilot.numbers.congSlopes%>%filter(target_present)%>%pull(cong)%>%mean()%>%round()` vs. `r Evs3Pilot.numbers.congSlopes%>%filter(target_present)%>%pull(incong)%>%mean()%>%round()` ms/item; `r Evs3Pilot.numbers.congSlopesTests$H1%>%t.test()%>%apa_print()%>%'$'(statistic)`), and letter distractors (`r Evs3Pilot.letters.congSlopes%>%filter(target_present)%>%pull(cong)%>%mean()%>%round()` vs. `r Evs3Pilot.letters.congSlopes%>%filter(target_present)%>%pull(incong)%>%mean()%>%round()` ms/item; `r Evs3Pilot.letters.congSlopesTests$H1%>%t.test()%>%apa_print()%>%'$'(statistic)`). 
+
+*Hypothesis 2 (search slopes: target-absent trials)*: Target-absent search slopes were qualitatively steeper when the target and distractors were of the same semantic category (mean slope: `r Evs3Pilot.congSlopes%>%filter(!target_present)%>%pull(cong)%>%mean()%>%round()` ms/item) compared to when it was unfamiliar (`r Evs3Pilot.congSlopes%>%filter(!target_present)%>%pull(incong)%>%mean()%>%round()` ms/item; `r Evs3Pilot.congSlopesTests$H2%>%t.test()%>%apa_print()%>%'$'(full_result)`). The same qualitative result was observed when restricting analysis to number distractors (`r Evs3Pilot.numbers.congSlopes%>%filter(!target_present)%>%pull(cong)%>%mean()%>%round()` vs. `r Evs3Pilot.numbers.congSlopes%>%filter(!target_present)%>%pull(incong)%>%mean()%>%round()` ms/item; `r Evs3Pilot.numbers.congSlopesTests$H2%>%t.test()%>%apa_print()%>%'$'(statistic)`), but not to letter distractors (`r Evs3Pilot.letters.congSlopes%>%filter(!target_present)%>%pull(cong)%>%mean()%>%round()` vs. `r Evs3Pilot.letters.congSlopes%>%filter(!target_present)%>%pull(incong)%>%mean()%>%round()` ms/item; `r Evs3Pilot.letters.congSlopesTests$H2%>%t.test()%>%apa_print()%>%'$'(statistic)`). 
+
+*Hypothesis 3 (search slopes in presence vs. absence)*: The effect of target-distractor congruency was weaker in target-absent trials compared to what is expected based on target-absent trials (`r Evs3Pilot.congSlopesTests$H3%>%t.test()%>%apa_print()%>%'$'(statistic)`). This was qualitatively the case for letter distractors (`r Evs3Pilot.letters.congSlopesTests$H3%>%t.test()%>%apa_print()%>%'$'(statistic)`), but not for number distractors (`r Evs3Pilot.numbers.congSlopesTests$H3%>%t.test()%>%apa_print()%>%'$'(statistic)`).
+
+*Hypothesis 4 (miss rate)*: Participants missed more targets when the distractors were congruent (miss rate: `r (1-Evs3Pilot.acc$acc_cong%>%mean())%>%printnum()`) than incongruent (`r (1-Evs3Pilot.acc$acc_incong%>%mean())%>%printnum()`; `r Evs3Pilot.acc$H4%>%t.test()%>%apa_print()%>%'$'(full_result)`). We found a significant effect of congruency on miss rates when focusing on letter distractors (`r (1-Evs3Pilot.letters.acc$acc_cong%>%mean())%>%printnum()` vs. `r (1-Evs3Pilot.letters.acc$acc_incong%>%mean())%>%printnum()`; `r Evs3Pilot.letters.acc$H4%>%t.test()%>%apa_print()%>%'$'(full_result)`), and on number distractors (`r (1-Evs3Pilot.numbers.acc$acc_cong%>%mean())%>%printnum()` vs. `r (1-Evs3Pilot.numbers.acc$acc_incong%>%mean())%>%printnum()`; `r Evs3Pilot.numbers.acc$H4%>%t.test()%>%apa_print()%>%'$'(full_result)`).
+
+*Hypothesis 5 (miss rate by set size)*: Participants missed more targets when set size was high (`r Evs3Pilot.acc$set_size_effect%>%t.test()%>%apa_print()%>%'$'(full_result)`). This effect was more pronounced in the congruent condition compared  to the incongruent condition (`r Evs3Pilot.acc$H5%>%t.test()%>%apa_print()%>%'$'(full_result)`). A set size effect on miss rate was observed for letter distractors (`r Evs3Pilot.letters.acc$H5%>%t.test()%>%apa_print()%>%'$'(full_result)`) but not for number distractors (`r Evs3Pilot.numbers.acc$H5%>%t.test()%>%apa_print()%>%'$'(full_result)`).
+
+# References
+
+\begingroup
+\setlength{\parindent}{-0.5in}
+\setlength{\leftskip}{0.5in}
+
+<div id="refs" custom-style="Bibliography"></div>
+\endgroup

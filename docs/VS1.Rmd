@@ -1,0 +1,604 @@
+---
+title             : "Detection in Context - visual search experiment"
+shorttitle        : "Detection in Context - visual search experiment"
+
+author: 
+  - name          : "Matan Mazor"
+    affiliation   : "1,2"
+    corresponding : yes    # Define only one corresponding author
+    address       : "Malet Street, London WC1E 7HX"
+    email         : "mtnmzor@gmail.com"
+  #   role:         # Contributorship roles (e.g., CRediT, https://casrai.org/credit/)
+  #     - Conceptualization
+  #     - Writing - Original Draft Preparation
+  #     - Writing - Review & Editing
+  
+    
+  - name          : "Clare Press"
+    affiliation   : "1,2"
+    # role:
+    #   - Writing - Review & Editing
+
+affiliation:
+  - id            : "1"
+    institution   : "Birkbeck, University of London"
+  - id            : "2"
+    institution   : "Wellcome Centre for Human Neuroimaging, UCL"
+
+
+abstract: |
+  
+  
+  
+  <!-- https://tinyurl.com/ybremelq -->
+  
+keywords          : "keywords"
+wordcount         : "X"
+
+bibliography      : ["r-references.bib"]
+
+floatsintext      : no
+figurelist        : no
+tablelist         : no
+footnotelist      : no
+linenumbers       : yes
+mask              : no
+draft             : no
+
+documentclass     : "apa6"
+classoption       : "man"
+output            : papaja::apa6_word
+---
+
+```{r setup, include = FALSE}
+library("papaja")
+library('pwr')
+library('dplyr')
+library('tidyverse')
+library('broom')
+knitr::opts_chunk$set(fig.pos = "!H", out.extra = "")
+```
+
+```{r analysis-preferences}
+# Seed for random number generation
+set.seed(42)
+knitr::opts_chunk$set(cache.extra = knitr::rand_seed)
+```
+
+# Motivation
+
+Perceptual decisions are influenced not only by incoming sensory input, but also by our own expectations and motivations. For example, stimuli that are predictable in a given context can appear sharper [@rossel2022makes] and are more likely to be perceived when presented at near-threshold intensity [@yon2020action; @reznik2014lateralized]. Apparently opposite effects are also sometimes observed, whereby expected events are perceived less readily than their unexpected counterparts [@press2020perceptual]. There are many unanswered questions concerning what contributes to the influence of expectations on perceptual experience. One likely contributing factor concerns whether subjects believe (explicitly or implicitly) that they will detect expected or unexpected events more readily, and whether they are able to utilize these beliefs in guiding their information gathering behaviour. 
+
+In two previous studies we used the timing of decisions about absence in a detection task to investigate implicit beliefs about facilitating effects of expectation on perception. We used a paradigm where expected events are detected more readily than unexpected events: subjects are faster to detect letters when surrounded by other letters that make it into a meaningful word. We replicated this effect of context on the timing of decisions about presence, but found that context did not significantly modulate the efficiency of decisions about target absence. This finding is consistent with the absence of metacognitive representation of the facilitating effects of expectations on perception.
+
+Here, we test the generalizability of this finding to a different task (visual search) and type of expectation (stimulus familiarity). We utilize the established finding that searches are easier when the target is unfamiliar and the distractors are familiar compared to the opposite setting [@wang1994familiarity], and use the timing of decisions about absence to ask whether subjects can metacognitively represent this fact, and whether they can use this knowledge to make efficient decisions about target absence. By examining the timing of decisions about target absence in the very first trials of the task [@mazor2022efficient], we distill stimulus-specific search termination mechanisms from generic criterion-adjustment heuristics [@chun1996just]. 
+
+
+# Methods
+We report how we determined our sample size, all data exclusions (if any), all manipulations, and all measures in the study. <!-- 21-word solution (Simmons, Nelson & Simonsohn, 2012; retrieved from http://ssrn.com/abstract=2160588) -->
+
+## Participants
+
+The research complies with all relevant ethical regulations, and was approved by the Research Ethics Committee of Birkbeck, University of London (study ID number 1812000). Participants will be recruited via Prolific, and will give informed consent prior to their participation. To be eligible to take part in this study, their Prolific approval rate will need to be 95% or higher, their reported first language English, their vision normal or corrected to normal, and their age between 18 and 60. We will collect data until we reach 320 included participants for each hypothesis (after applying our pre-registered exclusion criteria), or until we collect a total of 600 participants. The entire experiment will take 4:30 minutes to complete. Participants will be paid £0.57 for their participation, equivalent to an hourly wage of £7.6.
+
+
+## Procedure
+
+Participants will first be instructed about the visual search task. Specifically, that their task is to report, as accurately and quickly as possible, whether a target stimulus was present (press 'J') or absent (press 'F'). Then, practice trials will be delivered, in which the target stimulus is a circle and distractors are squares. The purpose of the practice trials is to familiarize participants with the structure of the task. For these practice trials the number of items will always be 3. Practice trials will be delivered in small blocks of 6 trials each, and the main part of the experiment will start only once participants respond correctly on at least five trials in a block (see Figure \@ref(fig:design)). 
+
+
+```{r design, echo=FALSE, fig.cap="Experimental design. Top panel: each visual search trial will start with a screen indicating the target stimulus. The search display will remain visible until a response is recorded. To motivate accurate responses, the feedback screen will remain visible for one second following correct responses and for four seconds following errors. Middle panel: after reading the instructions, participants will practice the visual search task in blocks of 6 trials, until they reach an accuracy level of 83% correct or higher (at most one error per block of 6 trials). Bottom panel: the main part of the experiment will comprise two blocks of 12 trials each, in which the target will be a canonically presented or inverted Z. Unbeknown the subjects, the first two trials within each block will always be two target-absent trials of set sizes 3 and 6. The remaining 10 trials will complete the block to a full balanced factorial design of set size (3 or 6) by target presence (present or absent).", out.width = '60%'}
+knitr::include_graphics("figures/designVS.png")
+```
+
+The main part of the experiment will comprise two conditions:
+
+In the familiar target condition, subjects will complete 12 trials of searching for the letter Z among inverted Zs, with set sizes 3 or 6 on different trials. Importantly, the first 2 trials will always be target-absent trials. The order of the remaining 10 trials will be fully randomized. 
+
+In the unfamiliar target condition, subjects will complete 12 trials of searching for an inverted Z among canonically presented Zs, and the order of the remaining 10 trials fully randomized.
+
+Search trials will appear in two blocks in counterbalanced order. A multi-choice comprehension question will be delivered before each block. 
+
+### Randomization
+
+The order and timing of experimental events will be determined pseudo-randomly by the Mersenne Twister pseudorandom number generator, initialized in a way that ensures registration time-locking [@mazor2019novel]. 
+
+## Data analysis
+
+### Rejection criteria
+
+Participants will be excluded for making more than four errors in the main part of the experiment, or for having extremely fast or slow reaction times in one or more of the tasks (below 100 milliseconds or above 5 seconds in more than 25% of the trials). 
+
+Error trials, and trials with response time below 100 milliseconds or above 5 second will be excluded from the response-time analysis.
+
+### Data preprocessing
+
+Given that this is a short experiment (24 trials overall) we expect reaction time to decrease from trial to trial, and especially from the first to the second trial [@mazor2022efficient]. To control for search-time variability that is due to trial order effects, we will correct RTs using the following formula: $RT^{corrected}_{s,b,t}=RT_{s,b,t}-\hat{RT_{b,t}}+\hat{RT}$ where $RT_{s,b,t}$ corresponds to the reaction time of subject s in block b and trial t, and $\hat{RT_{b,t}}$ to the mean RT of all subjects in block b and trial t and $\hat{RT}$ to the mean RT over all subjects and trials. Importantly, this correction does not bias search time slope estimates, as set size is fully randomized between trials. 
+
+### Hypotheses and analysis plan
+
+
+Subject-wise target-presence and target-absence search slopes will be extracted for the two conditions by fitting a linear regression model to the reaction time data with one intercept and one set-size term. Our analysis will focus on the difference in target-absent search slopes between the two conditions. We will ask whether search times are affected by the the familiarity of target and distractors in decisions about absence, and if yes, whether this effect is present already in the first trials of the experiment.  
+
+Analysis will comprise a positive control based on target-present trials (H1), a test of a familiarity asymmetry effect in target-absent trials (H2), a test for an interaction between target presence and target familiarity (H3), a test of a familarity asymmetry effect in the first trials (H4), a test for an interaction between the effect of familiary on target-absence slopes and trial number (H5), and a test for the interaction between target presence and target familiarity in the first trials (H6). All hypotheses will be tested using a repeated-measures t-test, with a significance level of 0.05. 
+Given that in hypotheses 4-6 we only have one trial per cell, one excluded trial is sufficient to make some hypotheses impossible to test on a given participant. For this reason, for each hypothesis separately, participants will be included only if all necessary trials meet our inclusion criteria. This means that some hypotheses may be tested on different subsets of participants.
+
+*Hypothesis 1 (Search asymmetry: target-present trials)*: Search-time slopes will be extracted from target-present trials in the familiar and unfamiliar target conditions. We will test the null hypothesis that the slopes are identical, using a within-subject t-test. Following @wang1994familiarity, we expect slopes to be steeper when the target is familiar. 
+
+*Hypothesis 2 (search asymmetry: target-absent trials)*: Search-time slopes will be extracted from target-absent trials in the familiar and unfamiliar target conditions. We will test the null hypothesis that the slopes are identical, using a within-subject t-test. Steeper slopes for familiar targets can be driven by prior expectations about the different difficulty of these two searches, or by learning from previous trials. 
+
+*Hypothesis 3 (search asymmetry in presence vs. absence)*: We will test the modulation of target presence on the effect of target (familiar/unfamiliar) on decision time. We would interpret a significant modulation, such that the effect is stronger in target-presence trials, as evidence for a failure to use metacognitive knowledge about expectation effects in decisions about absence. 
+
+*Hypothesis 4 (search asymmetry: first target-absent trials)*: Search-time slopes will be extracted from the first two target-absent trials in each block. We will test the null hypothesis that the slopes are identical for familiar and unfamiliar targets, using a within-subject t-test. Here, steeper slopes for familiar targets can only be driven by prior expectations about the different difficulty of these two searches. 
+
+*Hypothesis 5 (search asymmetry: first versus last target-absent trials)*: We will test the modulation of trial position (first/last included trials in a block) on the effect of target (familiar/unfamiliar) on search time. A significant interaction would indicate an adjustment of the search termination strategy based on task experience. This learning can be specific ('finding the letter Z is harder'), generic ('finding unfamiliar stimuli is harder'), or driven by a content-invariant heuristic ('It takes me longer to find the targets in this block'). 
+
+*Hypothesis 6 (search asymmetry in presence vs. absence: first trials)*: We will test the modulation of target presence and target familiarity on decision time, restricting the analysis to the first included trials in each block. The interpretation here would be similar to Hypothesis 6, with the exception that here we can exclude learning effects. 
+
+
+
+## Statistical power
+
+Statistical power calculations were performed using the R-pwr package [@R-pwr].
+
+With a minimum of 320 participants for each hypothesis, we will have statistical power of 95% to detect effects of size `r printnum(pwr.t.test(power=0.95,n=320,sig.level=0.05, type='paired')%>%'$'(d))` 
+
+# Results
+
+We used `r cite_r(file = "r-references.bib", pkgs = c("dplyr", "ggplot2", "tidyverse","papaja","broom"), withhold = FALSE)` for all our analyses.
+
+```{r load_data, echo=FALSE, cache=TRUE}
+
+E3.df <- read.csv('..\\experiments\\flippedZs\\data\\jatos_results_batch1.txt',na.strings=c(""," ","NA")) %>%
+  filter(trial_type=='p5vs_yn' & test_part %in% c('absence1','mixed2')) %>%
+  mutate(subj_id=subject_identifier,
+         RT=as.numeric(RT),
+         set_size=as.numeric(set_size),
+         correct = correct=='true',
+         target_present = target_present=='true',
+         block=as.numeric(block))%>%
+  dplyr::select(subj_id,flipped_first,RT,correct,set_size,target_present,search_type, block,test_part)
+
+# E3.time_taken <-read.csv('..\\experiments\\pilots\\flippedZsFirstTrials\\data\\prolific_export_batch2.csv',na.strings=c(""," ","NA")) %>%
+#   filter(Status=='APPROVED') %>%
+#   pull(Time.taken)
+
+E3.summary_stats = E3.df %>%
+  group_by(subj_id) %>%
+  summarise(nerrors=sum(!correct),
+            nerrors_first = sum(!correct & test_part=='absence1'),
+            RT25=quantile(RT,0.25),
+            RT50=quantile(RT,0.50),
+            RT75=quantile(RT,0.75))
+
+E3.included = E3.summary_stats %>%
+  filter(nerrors<5 &
+           RT25>100 &
+           RT75<5000) %>%
+  pull(subj_id)
+
+N_total <- E3.df$subj_id%>%unique()%>%length()
+```
+
+## Participants
+
+We collected data from a total of `r N_total` participants, recruited on Prolific. The entire experiment took 4:30 minutes to complete (median completion time: 4:22 minutes). Participants were paid £0.57 for their participation, equivalent to an hourly wage of £7.6. The data of `r E3.included%>%length()` participants met our inclusion criteria and were used for the main analysis.
+
+Overall participants made `r E3.summary_stats$nerrors%>%mean()%>%printnum()` errors on average (standard deviation =`r E3.summary_stats$nerrors%>%sd()%>%printnum()`). The median reaction time was `r E3.summary_stats$RT50%>%median()%>%round()` ms (interquartile range = `r E3.summary_stats$RT50%>%IQR()%>%round()`. In all further analyses, only correct trials with response time between 100 and 5000 ms are included. 
+
+```{r search-time-analysis, echo=FALSE, cache=TRUE}
+
+E3.RT_by_position <- E3.df %>%
+  group_by(subj_id)%>%
+  mutate(i=seq_along(RT))%>%
+  group_by(i) %>%
+  summarise(RT=mean(RT))
+
+E3.mean_RT <- E3.df$RT %>% mean()
+
+# preprocessed df, correcting for trial order effects
+E3.pp_df <- E3.df %>%
+  group_by(subj_id) %>%
+  mutate(i=seq_along(RT)) %>%
+  rowwise() %>%
+  mutate(meanRT_per_i = E3.RT_by_position$RT[E3.RT_by_position$i==i],
+         RTcorrected = RT-meanRT_per_i+E3.mean_RT)
+
+N_perm <- 1000;
+bootstrap_error <- function(x, N_perm) {
+  N <- length(x)
+  medians = c();
+  for (i in 1:N_perm) {
+    medians = c(medians,sample(x,replace=TRUE,size=N)%>%median())
+  };
+  return(sd(medians))
+}
+
+
+E3.slopes_by_part <- E3.pp_df %>%
+  filter(correct & RT>100 & RT<5000 & subj_id %in% E3.included) %>%
+  group_by(subj_id,search_type,test_part, target_present) %>%
+  do(model=lm(RTcorrected~set_size,data=.)) %>%
+  mutate(tidys=list(broom::tidy(model))) %>%
+  unnest(tidys) %>%
+  # we are interested in the slope, i.e., the effect of set size.
+  filter(term=='set_size') %>%
+  dplyr::select(subj_id,search_type,test_part,target_present,estimate)%>%
+  rename(slope=estimate)%>%
+  mutate(target_present = factor(ifelse(target_present,'present','absent'), levels=c('present','absent')),
+         search_type=ifelse(search_type=='searchZ','Z','flipZ'),
+         test_part=ifelse(test_part=='absence1','a1','m2'),
+         condition=paste(test_part,search_type,target_present,sep='_')) %>%
+  dplyr::select(subj_id,condition,slope) %>%
+  spread(condition,slope)
+
+
+E3.pooled_slopes <- E3.pp_df %>%
+  filter(correct & RT>100 & RT<5000 & subj_id %in% E3.included) %>%
+  group_by(subj_id,search_type,target_present) %>%
+  do(model=lm(RTcorrected~set_size,data=.)) %>%
+  mutate(tidys=list(broom::tidy(model))) %>%
+  unnest(tidys) %>%
+  # we are interested in the slope, i.e., the effect of set size.
+  filter(term=='set_size') %>%
+  dplyr::select(subj_id,search_type,target_present,estimate)%>%
+  rename(slope=estimate)%>%
+  mutate(target_present = factor(ifelse(target_present,'present','absent'), levels=c('present','absent')),
+         search_type=ifelse(search_type=='searchZ','Z','flipZ'),
+         condition=paste('pooled',search_type,target_present,sep='_')) %>%
+  dplyr::select(subj_id,condition,slope) %>%
+  spread(condition,slope)
+
+E3.last_slopes <- E3.pp_df %>%
+  filter(correct & RT>100 & RT<5000 & subj_id %in% E3.included) %>%
+  group_by(subj_id,search_type,target_present,set_size) %>%
+  arrange(-i) %>%
+  summarise(RTcorrected=RTcorrected[1]) %>%
+  group_by(subj_id,search_type,target_present) %>%
+  do(model=lm(RTcorrected~set_size,data=.)) %>%
+  mutate(tidys=list(broom::tidy(model))) %>%
+  unnest(tidys) %>%
+  # we are interested in the slope, i.e., the effect of set size.
+  filter(term=='set_size') %>%
+  dplyr::select(subj_id,search_type,target_present,estimate)%>%
+  rename(slope=estimate)%>%
+  mutate(target_present = factor(ifelse(target_present,'present','absent'), levels=c('present','absent')),
+         search_type=ifelse(search_type=='searchZ','Z','flipZ'),
+         condition=paste('last',search_type,target_present,sep='_')) %>%
+  dplyr::select(subj_id,condition,slope) %>%
+  spread(condition,slope)
+
+E3.first_slopes <- E3.pp_df %>%
+  filter(correct & RT>100 & RT<5000 & subj_id %in% E3.included) %>%
+  group_by(subj_id,search_type,target_present,set_size) %>%
+  arrange(i) %>%
+  summarise(RTcorrected=RTcorrected[1]) %>%
+  group_by(subj_id,search_type,target_present) %>%
+  do(model=lm(RTcorrected~set_size,data=.)) %>%
+  mutate(tidys=list(broom::tidy(model))) %>%
+  unnest(tidys) %>%
+  # we are interested in the slope, i.e., the effect of set size.
+  filter(term=='set_size') %>%
+  dplyr::select(subj_id,search_type,target_present,estimate)%>%
+  rename(slope=estimate)%>%
+  mutate(target_present = factor(ifelse(target_present,'present','absent'), levels=c('present','absent')),
+         search_type=ifelse(search_type=='searchZ','Z','flipZ'),
+         condition=paste('first',search_type,target_present,sep='_')) %>%
+  dplyr::select(subj_id,condition,slope) %>%
+  spread(condition,slope)
+
+
+E3.slopes <- E3.slopes_by_part %>%
+  merge(E3.pooled_slopes) %>%
+  merge(E3.last_slopes) %>%
+  merge(E3.first_slopes) %>%
+  mutate(H1 = pooled_Z_present-pooled_flipZ_present,
+         H2 = pooled_Z_absent-pooled_flipZ_absent,
+         H3 = H1-H2,
+         H4 = a1_Z_absent-a1_flipZ_absent,
+         H5a = last_Z_absent-last_flipZ_absent,
+         H5 = H4-H5a,
+         H6a = first_Z_present-first_flipZ_present,
+         H6b = first_Z_absent-first_flipZ_absent,
+         H6 = H6a-H6b)
+```
+(ref:results) A: experimental conditions. B: median search time by set size for the two search tasks, using all included trials. C and D: median search time by set size for the two search tasks, using only the first or the last included trial from each cell in the factorial design.  Significance stars correspond to the difference in slope between the two searches. \*: p<0.5, \* \* : p<0.01, \* \* \* : p<0.001
+
+```{r estimates, fig.pos = 'H', out.width="\\textwidth", fig.cap="(ref:results)"}
+
+knitr::include_graphics("figures/VSresults.png")
+
+```
+
+*Hypothesis 1 (Search asymmetry: target-present trials)*: Target-present search slopes were steeper when the target was familiar (mean slope: `r E3.slopes$pooled_Z_present%>%mean()%>%round()` ms/item) compared to when it was unfamiliar (`r E3.slopes$pooled_flipZ_present%>%mean()%>%round()` ms/item; `r E3.slopes$H1%>%t.test()%>%apa_print()%>%'$'(full_result)`), qualitatively replicating the results reported in @wang1994familiarity. 
+
+*Hypothesis 2 (search asymmetry: target-absent trials)*: Target-absent search slopes were also steeper when the target was familiar (mean slope: `r E3.slopes$pooled_Z_absent%>%mean(na.rm=T)%>%round()` ms/item) compared to it was unfamiliar (`r E3.slopes$pooled_flipZ_absent%>%mean(na.rm=T)%>%round()` ms/item; `r E3.slopes$H2%>%t.test()%>%apa_print()%>%'$'(full_result)`). 
+
+*Hypothesis 3 (expectation effect in presence vs. absence)*: The effect of target orientation on search slopes was similar in target-present and target-absent trials (`r E3.slopes$H3%>%t.test()%>%apa_print()%>%'$'(full_result)`).
+
+*Hypothesis 4 (search asymmetry: first target-absent trials)*: Focusing on the first trials of the block, target-absent search slopes were descriptively, but not significantly steeper when the target was familiar (mean slope: `r E3.slopes$a1_Z_absent%>%mean(na.rm=T)%>%round()` ms/item) compared to when it was unfamiliar (`r E3.slopes$a1_flipZ_absent%>%mean(na.rm=T)%>%round()` ms/item; `r E3.slopes$H4%>%t.test()%>%apa_print()%>%'$'(full_result)`). 
+
+*Hypothesis 5 (search asymmetry: first versus last target-absent trials)*: Focusing on the last trials of the block, target-absent search slopes were steeper when the target was familiar (mean slope: `r E3.slopes$last_Z_absent%>%mean(na.rm=T)%>%round()` ms/item) compared to when it was unfamiliar (`r E3.slopes$last_flipZ_absent%>%mean(na.rm=T)%>%round()` ms/item; `r E3.slopes$H5a%>%t.test()%>%apa_print()%>%'$'(full_result)`). However, there was no significant interaction between trial number and target familiarity on target-absent slopes (`r E3.slopes$H5%>%t.test()%>%apa_print()%>%'$'(full_result)`).
+
+*Hypothesis 6 (expectation effect in presence vs. absence: first trials)*: The interaction between target presence and target familiarity on slope was not significant when restricting analysis to the first trials in the block (`r E3.slopes$H6%>%t.test()%>%apa_print()%>%'$'(full_result)`).
+
+```{r search-times-figures, echo=FALSE, warning=FALSE, message=FALSE}
+
+
+E3.median_search_times <- E3.pp_df %>%
+  filter(correct & RT>100 & RT<5000 & subj_id %in% E3.included) %>%
+  group_by(subj_id,target_present,set_size,search_type) %>%
+  summarise(RT=median(RT)) %>%
+  group_by(target_present,search_type,set_size)%>%
+  summarise(median_RT=median(RT),
+            sem_RT = bootstrap_error(RT,N_perm))%>%
+  mutate(target_present = factor(ifelse(target_present,'present','absent'), levels=c('present','absent')))
+
+
+p <- ggplot(data=E3.median_search_times,
+                  aes(x=set_size, y=median_RT, linetype=target_present, color=search_type)) +
+  geom_line(size=1) +
+  # geom_point(aes(shape = search_type), size=4, color="black",stroke=1.5, alpha=0.8) +
+  # scale_shape_manual(values=c(4,21))+
+  scale_fill_manual(values = c("black","#377eb8"))+
+  scale_color_manual(values = c("black","#377eb8"))+
+  scale_linetype_manual(values=c("solid","21"))+
+  facet_grid(cols = vars(target_present))+
+  geom_errorbar(aes(ymin=median_RT-sem_RT,ymax=median_RT+sem_RT),linetype="solid", width=1.2, color="black") +
+  # facet_grid(cols = vars(test_part),
+  #            labeller = labeller(test_part = block_names))+
+  labs(x='set size',y='median RT (ms)', title='All trials') +
+  theme_bw()+
+  scale_x_continuous(limits=c(2,7),breaks = c(3,6))+
+  theme(legend.position='none',
+        legend.background = element_rect(fill=NA))+
+  guides(color = FALSE, linetype=FALSE) 
+
+ggsave('figures/VS1_all_trials.png',p,width=4,height=3)
+ggsave('figures/VS1_all_trials.svg',p,width=4,height=3)
+
+E3.median_first_search_times <- E3.pp_df %>%
+  filter(RT>100 & RT<5000 & subj_id %in% E3.included) %>%
+  group_by(subj_id,search_type,target_present,set_size) %>%
+  arrange(i) %>%
+  summarise(RT=RT[1],
+            correct=correct[1],
+            test_part=test_part[1]) %>%
+  filter(correct)%>%
+  group_by(search_type,target_present, set_size) %>%
+  summarise(median_RT=median(RT),
+            sem_RT = bootstrap_error(RT,N_perm))%>%
+  mutate(target_present = factor(ifelse(target_present,'present','absent'), levels=c('present','absent')))
+
+
+p <- ggplot(data=E3.median_first_search_times,
+                  aes(x=set_size, y=median_RT, linetype=target_present, color=search_type)) +
+  geom_line(size=1) +
+  # geom_point(aes(shape = search_type), size=4, color="black",stroke=1.5, alpha=0.8) +
+  # scale_shape_manual(values=c(4,21))+
+  scale_fill_manual(values = c("black","#377eb8"))+
+  scale_color_manual(values = c("black","#377eb8"))+
+  scale_linetype_manual(values=c("solid","21"))+
+  facet_grid(cols = vars(target_present))+
+  geom_errorbar(aes(ymin=median_RT-sem_RT,ymax=median_RT+sem_RT),linetype="solid", width=1.2, color="black") +
+  # facet_grid(cols = vars(test_part),
+  #            labeller = labeller(test_part = block_names))+
+  labs(x='set size',y='median RT (ms)', title='First trials') +
+  theme_bw()+
+  scale_x_continuous(limits=c(2,7),breaks = c(3,6))+
+  scale_y_continuous(limits=c(650,1200))+
+  theme(legend.position='none',
+        legend.background = element_rect(fill=NA))+
+  guides(color = FALSE, linetype=FALSE)
+
+ggsave('figures/VS1_first_trials.png',p,width=4,height=3)
+ggsave('figures/VS1_first_trials.svg',p,width=4,height=3)
+
+
+E3.median_last_search_times <- E3.pp_df %>%
+  filter(RT>100 & RT<5000 & subj_id %in% E3.included) %>%
+  group_by(subj_id,search_type,target_present,set_size) %>%
+  arrange(-i) %>%
+  summarise(RT=RT[1],
+            correct=correct[1],
+            test_part=test_part[1]) %>%
+  filter(correct)%>%
+  group_by(search_type,target_present, set_size) %>%
+  summarise(median_RT=median(RT),
+            sem_RT = bootstrap_error(RT,N_perm))%>%
+  mutate(target_present = factor(ifelse(target_present,'present','absent'), levels=c('present','absent')))
+
+
+p <- ggplot(data=E3.median_last_search_times,
+                  aes(x=set_size, y=median_RT, linetype=target_present, color=search_type)) +
+  geom_line(size=1) +
+  # geom_point(aes(shape = search_type), size=4, color="black",stroke=1.5, alpha=0.8) +
+  # scale_shape_manual(values=c(4,21))+
+  scale_fill_manual(values = c("black","#377eb8"))+
+  scale_color_manual(values = c("black","#377eb8"))+
+  scale_linetype_manual(values=c("solid","21"))+
+  facet_grid(cols = vars(target_present))+
+  geom_errorbar(aes(ymin=median_RT-sem_RT,ymax=median_RT+sem_RT),linetype="solid", width=1.2, color="black") +
+  # facet_grid(cols = vars(test_part),
+  #            labeller = labeller(test_part = block_names))+
+  labs(x='set size',y='median RT (ms)', title='Last trials') +
+  theme_bw()+
+  scale_x_continuous(limits=c(2,7),breaks = c(3,6))+
+  scale_y_continuous(limits=c(650,1200))+
+  theme(legend.position='none',
+        legend.background = element_rect(fill=NA))+
+  guides(color = FALSE, linetype=FALSE)
+
+ggsave('figures/VS1_last_trials.png',p,width=4,height=3)
+ggsave('figures/VS1_last_trials.svg',p,width=4,height=3)
+
+
+E3.mean_search_times <- E3.pp_df %>%
+  filter(correct & RT>100 & RT<5000 & subj_id %in% E3.included) %>%
+  group_by(subj_id,target_present,set_size,search_type) %>%
+  summarise(RT=mean(RT)) %>%
+  group_by(target_present,search_type,set_size)%>%
+  summarise(mean_RT=mean(RT),
+            se_RT = se(RT))%>%
+  mutate(target_present = factor(ifelse(target_present,'present','absent'), levels=c('present','absent')))
+
+p <- ggplot(data=E3.mean_search_times,
+                  aes(x=set_size, y=mean_RT, linetype=target_present, color=search_type)) +
+  geom_line(size=1) +
+  # geom_point(aes(shape = search_type), size=4, color="black",stroke=1.5, alpha=0.8) +
+  # scale_shape_manual(values=c(4,21))+
+  scale_fill_manual(values = c("black","#377eb8"))+
+  scale_color_manual(values = c("black","#377eb8"))+
+  scale_linetype_manual(values=c("solid","21"))+
+  facet_grid(cols = vars(target_present))+
+  geom_errorbar(aes(ymin=mean_RT-se_RT,ymax=mean_RT+se_RT),linetype="solid", width=1.2, color="black") +
+  # facet_grid(cols = vars(test_part),
+  #            labeller = labeller(test_part = block_names))+
+  labs(x='set size',y='median RT (ms)', title='All trials') +
+  theme_bw()+
+  scale_x_continuous(limits=c(2,7),breaks = c(3,6))+
+  theme(legend.position='none',
+        legend.background = element_rect(fill=NA))+
+  guides(color = FALSE, linetype=FALSE) 
+
+ggsave('figures/VS1_all_trials_mean.png',p,width=5,height=4.5)
+ggsave('figures/VS1_all_trials_mean.svg',p,width=5,height=4.5)
+
+E3.mean_first_search_times <- E3.pp_df %>%
+  filter(RT>100 & RT<5000 & subj_id %in% E3.included) %>%
+  group_by(subj_id,search_type,target_present,set_size) %>%
+  arrange(i) %>%
+  summarise(RT=RT[1],
+            correct=correct[1]) %>%
+  filter(correct)%>%
+  group_by(search_type,target_present, set_size) %>%
+  summarise(mean_RT=mean(RT),
+            se_RT = se(RT))%>%
+  mutate(target_present = factor(ifelse(target_present,'present','absent'), levels=c('present','absent')))
+
+p <- ggplot(data=E3.mean_first_search_times,
+                  aes(x=set_size, y=mean_RT, linetype=target_present, color=search_type)) +
+  geom_line(size=1) +
+  # geom_point(aes(shape = search_type), size=4, color="black",stroke=1.5, alpha=0.8) +
+  # scale_shape_manual(values=c(4,21))+
+  scale_fill_manual(values = c("black","#377eb8"))+
+  scale_color_manual(values = c("black","#377eb8"))+
+  scale_linetype_manual(values=c("solid","21"))+
+  facet_grid(cols = vars(target_present))+
+  geom_errorbar(aes(ymin=mean_RT-se_RT,ymax=mean_RT+se_RT),linetype="solid", width=1.2, color="black") +
+  # facet_grid(cols = vars(test_part),
+  #            labeller = labeller(test_part = block_names))+
+  labs(x='set size',y='median RT (ms)', title='First trials') +
+  theme_bw()+
+  scale_x_continuous(limits=c(2,7),breaks = c(3,6))+
+  theme(legend.position='none',
+        legend.background = element_rect(fill=NA))+
+  guides(color = FALSE, linetype=FALSE)
+
+ggsave('figures/VS1_first_trials_mean.png',p,width=5,height=4.5)
+ggsave('figures/VS1_first_trials_mean.svg',p,width=5,height=4.5)
+
+
+```
+
+
+```{r intercepts, echo=FALSE, cache=TRUE}
+
+
+
+
+E3.intercepts_by_part <- E3.pp_df %>%
+  filter(correct & RT>100 & RT<5000 & subj_id %in% E3.included) %>%
+  group_by(subj_id,search_type,test_part, target_present) %>%
+  do(model=lm(RTcorrected~set_size,data=.)) %>%
+  mutate(tidys=list(broom::tidy(model))) %>%
+  unnest(tidys) %>%
+  # we are interested in the slope, i.e., the effect of set size.
+  filter(term=='(Intercept)') %>%
+  dplyr::select(subj_id,search_type,test_part,target_present,estimate)%>%
+  rename(intercept=estimate)%>%
+  mutate(target_present = factor(ifelse(target_present,'present','absent'), levels=c('present','absent')),
+         search_type=ifelse(search_type=='searchZ','Z','flipZ'),
+         test_part=ifelse(test_part=='absence1','a1','m2'),
+         condition=paste(test_part,search_type,target_present,sep='_')) %>%
+  dplyr::select(subj_id,condition,intercept) %>%
+  spread(condition,intercept)
+
+
+E3.pooled_intercepts <- E3.pp_df %>%
+  filter(correct & RT>100 & RT<5000 & subj_id %in% E3.included) %>%
+  group_by(subj_id,search_type,target_present) %>%
+  do(model=lm(RTcorrected~set_size,data=.)) %>%
+  mutate(tidys=list(broom::tidy(model))) %>%
+  unnest(tidys) %>%
+  # we are interested in the slope, i.e., the effect of set size.
+  filter(term=='(Intercept)') %>%
+  dplyr::select(subj_id,search_type,target_present,estimate)%>%
+  rename(intercept=estimate)%>%
+  mutate(target_present = factor(ifelse(target_present,'present','absent'), levels=c('present','absent')),
+         search_type=ifelse(search_type=='searchZ','Z','flipZ'),
+         condition=paste('pooled',search_type,target_present,sep='_')) %>%
+  dplyr::select(subj_id,condition,intercept) %>%
+  spread(condition,intercept)
+
+E3.last_intercepts <- E3.pp_df %>%
+  filter(correct & RT>100 & RT<5000 & subj_id %in% E3.included) %>%
+  group_by(subj_id,search_type,target_present,set_size) %>%
+  arrange(-i) %>%
+  summarise(RTcorrected=RTcorrected[1]) %>%
+  group_by(subj_id,search_type,target_present) %>%
+  do(model=lm(RTcorrected~set_size,data=.)) %>%
+  mutate(tidys=list(broom::tidy(model))) %>%
+  unnest(tidys) %>%
+  # we are interested in the slope, i.e., the effect of set size.
+  filter(term=='(Intercept)') %>%
+  dplyr::select(subj_id,search_type,target_present,estimate)%>%
+  rename(intercept=estimate)%>%
+  mutate(target_present = factor(ifelse(target_present,'present','absent'), levels=c('present','absent')),
+         search_type=ifelse(search_type=='searchZ','Z','flipZ'),
+         condition=paste('last',search_type,target_present,sep='_')) %>%
+  dplyr::select(subj_id,condition,intercept) %>%
+  spread(condition,intercept)
+
+E3.first_intercepts <- E3.pp_df %>%
+  filter(correct & RT>100 & RT<5000 & subj_id %in% E3.included) %>%
+  group_by(subj_id,search_type,target_present,set_size) %>%
+  arrange(i) %>%
+  summarise(RTcorrected=RTcorrected[1]) %>%
+  group_by(subj_id,search_type,target_present) %>%
+  do(model=lm(RTcorrected~set_size,data=.)) %>%
+  mutate(tidys=list(broom::tidy(model))) %>%
+  unnest(tidys) %>%
+  # we are interested in the slope, i.e., the effect of set size.
+  filter(term=='(Intercept)') %>%
+  dplyr::select(subj_id,search_type,target_present,estimate)%>%
+  rename(intercept=estimate)%>%
+  mutate(target_present = factor(ifelse(target_present,'present','absent'), levels=c('present','absent')),
+         search_type=ifelse(search_type=='searchZ','Z','flipZ'),
+         condition=paste('first',search_type,target_present,sep='_')) %>%
+  dplyr::select(subj_id,condition,intercept) %>%
+  spread(condition,intercept)
+
+
+E3.intercepts <- E3.intercepts_by_part %>%
+  merge(E3.pooled_intercepts) %>%
+  merge(E3.last_intercepts) %>%
+  merge(E3.first_intercepts) %>%
+  mutate(H1 = pooled_Z_present-pooled_flipZ_present,
+         H2 = pooled_Z_absent-pooled_flipZ_absent,
+         H3 = H1-H2,
+         H4 = a1_Z_absent-a1_flipZ_absent,
+         H5a = last_Z_absent-last_flipZ_absent,
+         H5 = H4-H5a,
+         H6a = first_Z_present-first_flipZ_present,
+         H6b = first_Z_absent-first_flipZ_absent,
+         H6 = H6a-H6b)
+```
+# References
+
+\begingroup
+\setlength{\parindent}{-0.5in}
+\setlength{\leftskip}{0.5in}
+
+<div id="refs" custom-style="Bibliography"></div>
+\endgroup
