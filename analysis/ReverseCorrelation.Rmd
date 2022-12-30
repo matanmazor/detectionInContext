@@ -1,0 +1,228 @@
+```{r setup, include = FALSE}
+
+library('groundhog')
+groundhog.library(
+  c(
+    'papaja',
+    'reticulate',
+    'tidyverse',
+    'broom',
+    'cowplot',
+    'MESS', # for AUCs
+    'lsr', # for effect sizes
+    'pwr', # for power calculations
+    'brms', # for mixed effects modeling
+    'BayesFactor',# for Bayesian t test
+    'jsonlite', #parsing data from sort_trial
+    'afex' #for anova
+  ), "2022-12-01"
+)
+r_refs("r-references.bib")
+
+```
+
+```{r load_and_format_data, echo=FALSE, cache=TRUE}
+E1.frames_df <- read_csv('../experiments/letters/data/jatos_resultfiles_batch1/all_data.csv') %>%
+  mutate(subj_id=PROLIFIC_PID,
+         correct = as.numeric(correct),
+         RT = as.numeric(RT),
+         present=as.numeric(present),
+         resp = response==presence_key,
+         context=ifelse(context_string=='M SK','A',context))
+
+E2.frames_df <- read_csv('../experiments/letters2/data/jatos_resultfiles_batch1/all_data.csv') %>%
+  mutate(subj_id=PROLIFIC_PID,
+         correct = as.numeric(correct),
+         RT = as.numeric(RT),
+         present=as.numeric(present),
+         resp = response==presence_key,
+         context=ifelse(context_string=='M SK','A',context)) #I accidentally coded this as S
+
+E3.frames_df <- read_csv('../experiments/letters3occluded/version2/data/jatos_resultfiles_batch1/all_data.csv') %>%
+  mutate(subj_id=PROLIFIC_PID,
+         correct = as.numeric(correct),
+         RT = as.numeric(RT),
+         present=as.numeric(present),
+         resp = response==presence_key) 
+```
+
+Plotting the correlation between the presented frame as the target as a function of target presence.
+
+```{r plot_correlation, echo=FALSE, cache=TRUE}
+
+E1.frames_df %>%
+  filter(test_part %in% c('test1','test2'))%>%
+  mutate(present = factor(present, levels=c(0,1), labels=c('absent','present'))) %>%
+  group_by(present,frame_index)%>%
+  summarise(r=mean(correlation_with_target_letter),
+            se = se(correlation_with_target_letter)) %>%
+  filter(frame_index<100) %>%
+  ggplot(aes(x=frame_index,y=r,color=present)) +
+  geom_line(size=1) + 
+  geom_ribbon(aes(ymin=r-se, ymax=r+se, fill=present), alpha=0.5) +
+  labs(x = 'frame index', y = 'correlation', title='Exp. 1') +
+  theme_classic()
+
+ggsave('../docs/figures/RC/visibility_by_presence_E1.png', width=4,height=3)
+
+E2.frames_df %>%
+  filter(test_part %in% c('test1','test2'))%>%
+  filter(RT>2000)%>% # to minimize effects of selection bias
+  mutate(present = factor(present, levels=c(0,1), labels=c('absent','present'))) %>%
+  group_by(present,frame_index)%>%
+  summarise(r=mean(correlation_with_target_letter),
+            se = se(correlation_with_target_letter)) %>%
+  filter(frame_index<100) %>%
+  ggplot(aes(x=frame_index,y=r,color=present)) +
+  geom_line(size=1) + 
+  geom_ribbon(aes(ymin=r-se, ymax=r+se, fill=present), alpha=0.5) +
+  labs(x = 'frame index', y = 'correlation', title='Exp. 2') +
+  theme_classic()
+
+ggsave('../docs/figures/RC/visibility_by_presence_E2.png', width=4,height=3)
+
+E3.frames_df %>%
+  filter(test_part %in% c('test1','test2'))%>%
+  filter(RT>2000)%>% # to minimize effects of selection bias
+  mutate(present = factor(present, levels=c(0,1), labels=c('absent','present'))) %>%
+  group_by(present,frame_index)%>%
+  summarise(r=mean(correlation_with_target_letter, na.rm=T),
+            se = se(correlation_with_target_letter, na.rm=T)) %>%
+  filter(frame_index<100) %>%
+  ggplot(aes(x=frame_index,y=r,color=present)) +
+  geom_line(size=1) + 
+  geom_ribbon(aes(ymin=r-se, ymax=r+se, fill=present), alpha=0.5) +
+  labs(x = 'frame index', y = 'correlation', title='Exp. 3') +
+  theme_classic()
+
+ggsave('../docs/figures/RC/visibility_by_presence_E3.png', width=4,height=3)
+  
+```
+
+Mean-centering correlations for the reverse correlation analysis. 
+
+```{r mean-center-correlations, echo=FALSE, cache=TRUE}
+
+E1.frames_df <- E1.frames_df %>%
+  filter(test_part %in% c('test1','test2'))%>%
+  group_by(present,max_p,frame_index)%>%
+  mutate(correlation_with_target_letter_corrected = 
+           correlation_with_target_letter-mean(correlation_with_target_letter),
+         present = factor(present, levels=c(0,1), labels=c('absent','present')))
+
+E1.frames_df %>%
+  group_by(present,frame_index)%>%
+  summarise(r=mean(correlation_with_target_letter_corrected),
+            se = se(correlation_with_target_letter_corrected)) %>%
+  filter(frame_index<100) %>%
+  ggplot(aes(x=frame_index,y=r,color=present)) +
+  geom_line(size=1) + 
+  geom_ribbon(aes(ymin=r-se, ymax=r+se, fill=present), alpha=0.5) +
+  labs(x = 'frame index', y = 'correlation corrected', title='Exp. 2') +
+  theme_classic()
+
+ggsave('../docs/figures/RC/visibility_by_presence_corrected_E2.png', width=4,height=3)
+
+E2.frames_df <- E2.frames_df %>%
+  filter(test_part %in% c('test1','test2'))%>%
+  group_by(present,max_p)%>%
+  mutate(correlation_with_target_letter_corrected = 
+           correlation_with_target_letter-mean(correlation_with_target_letter),
+         present = factor(present, levels=c(0,1), labels=c('absent','present')))
+
+E2.frames_df %>%
+  group_by(present,frame_index)%>%
+  summarise(r=mean(correlation_with_target_letter_corrected),
+            se = se(correlation_with_target_letter_corrected)) %>%
+  filter(frame_index<100) %>%
+  ggplot(aes(x=frame_index,y=r,color=present)) +
+  geom_line(size=1) + 
+  geom_ribbon(aes(ymin=r-se, ymax=r+se, fill=present), alpha=0.5) +
+  labs(x = 'frame index', y = 'correlation corrected', title='Exp. 2') +
+  theme_classic()
+
+ggsave('../docs/figures/RC/visibility_by_presence_corrected_E2.png', width=4,height=3)
+
+E3.frames_df <- E3.frames_df %>%
+  filter(test_part %in% c('test1','test2'))%>%
+  group_by(present,max_p, hide_proportion)%>%
+  mutate(correlation_with_target_letter_corrected = 
+           correlation_with_target_letter-mean(correlation_with_target_letter, na.rm=T),
+         present = factor(present, levels=c(0,1), labels=c('absent','present')))
+
+E3.frames_df %>%
+  group_by(present,frame_index)%>%
+  summarise(r=mean(correlation_with_target_letter_corrected, na.rm=T),
+            se = se(correlation_with_target_letter_corrected, na.rm=T)) %>%
+  filter(frame_index<100) %>%
+  ggplot(aes(x=frame_index,y=r,color=present)) +
+  geom_line(size=1) + 
+  geom_ribbon(aes(ymin=r-se, ymax=r+se, fill=present), alpha=0.5) +
+  labs(x = 'frame index', y = 'correlation corrected', title='Exp. 3') +
+  theme_classic()
+
+ggsave('../docs/figures/RC/visibility_by_presence_corrected_E3.png', width=4,height=3)
+
+  
+```
+
+Plotting decision kernels. 
+
+```{r reverse_correlation, echo=FALSE, cache=TRUE}
+
+E1.frames_df %>%
+  filter(frame_index<25)%>%
+  mutate(cong=context==target)%>%
+  group_by(subj_id,frame_index,cong) %>%
+  summarise(decision=mean(correlation_with_target_letter_corrected[resp]-
+                            correlation_with_target_letter_corrected[!resp])) %>%
+  group_by(frame_index,cong) %>%
+  summarise(se = se(decision, na.rm=T),
+            decision=mean(decision, na.rm=T)) %>%
+  ggplot(aes(x=frame_index,y=decision,ymin=decision-se,ymax=decision+se, color=cong, fill=cong)) +
+  geom_abline(intercept=0,slope=0, color='black')+
+  geom_line(size=1) +
+  geom_ribbon(alpha=0.5) +
+  labs(x='frame index', y='decision contrast',title='Exp.1')+
+  theme_classic()
+
+ggsave('../docs/figures/RC/decision_kernel_E1.png', width=4,height=3)
+
+
+E2.frames_df %>%
+  filter(frame_index<25)%>%
+  mutate(cong=context==target)%>%
+  group_by(subj_id,frame_index,cong) %>%
+  summarise(decision=mean(correlation_with_target_letter_corrected[resp]-
+                            correlation_with_target_letter_corrected[!resp])) %>%
+  group_by(frame_index,cong) %>%
+  summarise(se = se(decision, na.rm=T),
+            decision=mean(decision, na.rm=T)) %>%
+  ggplot(aes(x=frame_index,y=decision,ymin=decision-se,ymax=decision+se, color=cong, fill=cong)) +
+  geom_abline(intercept=0,slope=0, color='black')+
+  geom_line(size=1) +
+  geom_ribbon(alpha=0.5) +
+  labs(x='frame index', y='decision contrast',title='Exp.2')+
+  theme_classic()
+
+ggsave('../docs/figures/RC/decision_kernel_E2.png', width=4,height=3)
+
+E3.frames_df %>%
+  filter(frame_index<25)%>%
+  mutate(occlusion = factor(hide_proportion))%>%
+  group_by(subj_id,frame_index,occlusion) %>%
+  summarise(decision=mean(correlation_with_target_letter_corrected[resp]-
+                            correlation_with_target_letter_corrected[!resp])) %>%
+  group_by(frame_index,occlusion) %>%
+  summarise(se = se(decision, na.rm=T),
+            decision=mean(decision, na.rm=T)) %>%
+  ggplot(aes(x=frame_index,y=decision,ymin=decision-se,ymax=decision+se, color=occlusion, fill=occlusion)) +
+  geom_abline(intercept=0,slope=0, color='black')+
+  geom_line(size=1) +
+  geom_ribbon(alpha=0.5) +
+  labs(x='frame index', y='decision contrast',title='Exp.3')+
+  theme_classic()
+
+ggsave('../docs/figures/RC/decision_kernel_E3.png', width=4,height=3)
+  
+```

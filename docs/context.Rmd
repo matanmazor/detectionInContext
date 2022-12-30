@@ -63,19 +63,25 @@ We tested context effects on decisions about absence in two settings: a near-thr
 
 
 ```{r setup, include = FALSE}
-library("papaja")
+
+library('groundhog')
+groundhog.library(
+  c(
+    'papaja',
+    'reticulate',
+    'tidyverse',
+    'broom',
+    'cowplot',
+    'MESS', # for AUCs
+    'lsr', # for effect sizes
+    'pwr', # for power calculations
+    'brms', # for mixed effects modeling
+    'BayesFactor',# for Bayesian t test
+    'jsonlite', #parsing data from sort_trial
+    'afex' #for anova
+  ), "2022-12-01"
+)
 r_refs("r-references.bib")
-library('reticulate')
-library('tidyverse')
-library('broom')
-library('cowplot')
-library('MESS') # for AUCs
-library('lsr') # for effect sizes
-library('pwr') # for power calculations
-library('brms') # for mixed effects modeling
-library('BayesFactor') # for Bayesian t test
-library('jsonlite') #parsing data from sort_trial
-library('afex') #for anova
 
 ```
 
@@ -134,6 +140,7 @@ We used `r cite_r(file = "r-references.bib", pkgs = c("dplyr", "ggplot2", "tidyv
 
 ```{r load_and_format_data, echo=FALSE, cache=TRUE}
 E1.raw_df <- read_csv('../experiments/letters/data/jatos_resultfiles_batch1/all_data.csv') %>%
+  filter(frame_index==0)%>%
   mutate(subj_id=PROLIFIC_PID,
          correct = as.numeric(correct),
          RT = as.numeric(RT),
@@ -144,6 +151,7 @@ E1.raw_df <- read_csv('../experiments/letters/data/jatos_resultfiles_batch1/all_
 pilot.export.df <- read_csv('../experiments/pilots/letters/data/prolific_export_batch2.csv');
 
 E2.raw_df <- read_csv('../experiments/letters2/data/jatos_resultfiles_batch1/all_data.csv') %>%
+  filter(frame_index==0)%>%
   mutate(subj_id=PROLIFIC_PID,
          correct = as.numeric(correct),
          RT = as.numeric(RT),
@@ -152,6 +160,7 @@ E2.raw_df <- read_csv('../experiments/letters2/data/jatos_resultfiles_batch1/all
          context=ifelse(context_string=='M SK','A',context)) #I accidentally coded this as S
 
 E3.raw_df <- read_csv('../experiments/letters3occluded/version2/data/jatos_resultfiles_batch1/all_data.csv') %>%
+  filter(frame_index==0)%>%
   mutate(subj_id=PROLIFIC_PID,
          correct = as.numeric(correct),
          RT = as.numeric(RT),
