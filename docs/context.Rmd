@@ -150,6 +150,13 @@ E2.raw_df <- read_csv('../experiments/letters2/data/jatos_resultfiles_batch1/all
          present=as.numeric(present),
          resp = response==presence_key,
          context=ifelse(context_string=='M SK','A',context)) #I accidentally coded this as S
+
+E3.raw_df <- read_csv('../experiments/letters3occluded/version2/data/jatos_resultfiles_batch1/all_data.csv') %>%
+  mutate(subj_id=PROLIFIC_PID,
+         correct = as.numeric(correct),
+         RT = as.numeric(RT),
+         present=as.numeric(present),
+         resp = response==presence_key) 
 ```
 
 ```{r exclusion, echo=FALSE, cache=TRUE}
@@ -221,6 +228,38 @@ E2.to_exclude <- c(
 E2.df <- E2.raw_df %>%
   filter(!(subj_id %in% E2.to_exclude));
 
+E3.low_accuracy <- E3.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    accuracy = mean(correct)) %>%
+    filter(accuracy<0.5) %>%
+  pull(subj_id)
+
+E3.too_slow <- E3.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    third_quartile_RT = quantile(RT,0.75)) %>%
+    filter(third_quartile_RT>5000) %>%
+  pull(subj_id)
+
+E3.too_fast <- E3.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    first_quartile_RT = quantile(RT,0.25)) %>%
+    filter(first_quartile_RT<100) %>%
+  pull(subj_id)
+
+E3.to_exclude <- c(
+  E3.low_accuracy,
+  E3.too_slow,
+  E3.too_fast
+) %>% unique()
+
+E3.df <- E3.raw_df %>%
+  filter(!(subj_id %in% E3.to_exclude));
 ```
 
 
@@ -279,6 +318,18 @@ E2.overall_descriptives <- E2.df %>%
             fa_rate = (sum(!correct & !present)+0.5)/(sum(!present)+1),
             d = qnorm(hit_rate)-qnorm(fa_rate),
             c = -0.5*(qnorm(hit_rate)+qnorm(fa_rate)));
+
+E3.overall_descriptives <- E3.df %>%
+    filter(test_part=='test1' | test_part=='test2') %>%
+    group_by(subj_id) %>%
+    summarise(accuracy=mean(correct),
+            resp_bias=mean(resp),
+            slow_RT = quantile(RT,0.75)>5000,
+            RT=median(RT),
+            hit_rate = (sum(correct & present)+0.5)/(sum(present)+1),
+            fa_rate = (sum(!correct & !present)+0.5)/(sum(!present)+1),
+            d = qnorm(hit_rate)-qnorm(fa_rate),
+            c = -0.5*(qnorm(hit_rate)+qnorm(fa_rate)));
 ```
 
 `r E1.raw_df%>%pull(subj_id)%>%unique()%>%length()` participants completed the task. Mean accuracy in the main block experiment was `r E1.overall_descriptives%>%pull(accuracy)%>%mean()` (SD=`r E1.overall_descriptives%>%pull(accuracy)%>%sd()`). The mean median response time was `r printnum(E1.overall_descriptives%>%pull(RT)%>%mean()/1000)` seconds (SD=`r printnum(E1.overall_descriptives%>%pull(RT)%>%sd()/1000)`). No participants were excluded based on our pre-registered accuracy lower bound of 50%, and based on our pre-registered criterion for making hasty responses (RT<100 ms in more than 25% of the trials). We also pre-registered a plan to exclude participants with extremely slow reaction times (above 5 seconds in more than 25% of the trials), and to exclude trials with response times above 5 seconds. However, slower than expected responses meant that our pre-registered response-time dependent exclusion criteria were unfit to the data: excluding participants with more than 25% of trials slower than 5 seconds meant excluding `r E1.too_slow%>%length()` of our `r E1.raw_df%>%pull(subj_id)%>%unique()%>%length()` participants and biasing our sample. We therefore decided to revise our plan and to include participants and trials with slow responses. 
@@ -294,6 +345,13 @@ E1.RT_by_resp <- E1.df %>%
   mutate(diff=respTRUE-respFALSE)
 
 E2.RT_by_resp <- E2.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100) %>%
+  group_by(subj_id,resp) %>%
+  summarise(RT=median(RT))%>%
+  spread(resp,RT,sep='')%>%
+  mutate(diff=respTRUE-respFALSE)
+
+E3.RT_by_resp <- E3.df %>%
   filter((test_part=='test1' | test_part=='test2') & RT>100) %>%
   group_by(subj_id,resp) %>%
   summarise(RT=median(RT))%>%
@@ -398,6 +456,20 @@ E2.RT_by_context_in_presence_part2_only <- E2.df %>%
   summarise(RT=median(RT))%>%
   spread(cong,RT,sep='')%>%
   mutate(diff=congTRUE-congFALSE)
+
+E3.RT_by_occlusion_in_presence <- E3.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100 & resp) %>%
+  group_by(subj_id,hide_proportion) %>%
+  summarise(RT=median(RT))%>%
+  spread(hide_proportion,RT,sep='')%>%
+  mutate(diff=hide_proportion0.05-hide_proportion0.15);
+
+E3.RT_by_occlusion_in_presence_correct_only <- E3.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100 & resp & correct) %>%
+  group_by(subj_id,hide_proportion) %>%
+  summarise(RT=median(RT))%>%
+  spread(hide_proportion,RT,sep='')%>%
+  mutate(diff=hide_proportion0.05-hide_proportion0.15);
 ```
 
 Since decisions about absence are reached only when the subject can be confident that presence would have been detected, they are commonly slower than decisions about presence [@mazor2021stage]. Indeed, response times were significantly shorter in decisions about presence compared to absence (pre-registered Hypothesis 1: `r printnum(E1.RT_by_resp%>%pull(respTRUE)%>%mean()/1000)` vs `r printnum(E1.RT_by_resp%>%pull(respFALSE)%>%mean()/1000)` seconds; `r apa_print(E1.RT_by_resp%>%pull(diff)%>%t.test())$statistic`). 
@@ -486,6 +558,20 @@ E2.RT_by_context_in_absence_part2_only <- E2.df %>%
   summarise(RT=median(RT))%>%
   spread(cong,RT,sep='')%>%
   mutate(diff=congTRUE-congFALSE)
+
+E3.RT_by_occlusion_in_absence <- E3.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100 & !resp) %>%
+  group_by(subj_id,hide_proportion) %>%
+  summarise(RT=median(RT))%>%
+  spread(hide_proportion,RT,sep='')%>%
+  mutate(diff=hide_proportion0.05-hide_proportion0.15);
+
+E3.RT_by_occlusion_in_absence_correct_only <- E3.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100 & !resp & correct) %>%
+  group_by(subj_id,hide_proportion) %>%
+  summarise(RT=median(RT))%>%
+  spread(hide_proportion,RT,sep='')%>%
+  mutate(diff=hide_proportion0.05-hide_proportion0.15);
 ```
 
 
@@ -546,6 +632,20 @@ E2.RT_by_context_and_response_part2_only <- merge(
   by= 'subj_id',
   suffixes = c('presence','absence')) %>%
   mutate(interaction = diffpresence-diffabsence);
+
+E3.RT_by_occlusion_and_response <- merge(
+  E3.RT_by_occlusion_in_presence,
+  E3.RT_by_occlusion_in_absence,
+  by= 'subj_id',
+  suffixes = c('presence','absence')) %>%
+  mutate(interaction = diffpresence-diffabsence);
+
+E3.RT_by_occlusion_and_response_correct_only <- merge(
+  E3.RT_by_occlusion_in_presence_correct_only,
+  E3.RT_by_occlusion_in_absence_correct_only,
+  by= 'subj_id',
+  suffixes = c('presence','absence')) %>%
+  mutate(interaction = diffpresence-diffabsence);
 ```
 
 Critically, and in contrast to decisions about presence, the timing of decisions about absence was similar when the target letter was missing from a congruent or incongruent context (pre-registered Hypothesis 3: `r printnum(E1.RT_by_context_in_absence%>%pull(congTRUE)%>%mean()/1000)` vs `r printnum(E1.RT_by_context_in_absence%>%pull(congFALSE)%>%mean()/1000)` seconds; `r apa_print(E1.RT_by_context_in_absence%>%pull(diff)%>%t.test())$statistic`). Similarly, we found no effect of context on RT in decisions about absence also when restricting our analysis to correct trials only (`r apa_print(E1.RT_by_context_in_absence_correct_only%>%pull(diff)%>%t.test())$statistic`). Furthermore, the effect of context congruency on response time was stronger in decisions about target presence, compared to decisions about target absence (pre-registered Hypothesis 4: `r apa_print(E1.RT_by_context_and_response%>%pull(interaction)%>%t.test())$statistic`), also when restricting the analysis to correct responses only (`r apa_print(E1.RT_by_context_and_response_correct_only%>%pull(interaction)%>%t.test())$statistic`).
@@ -576,6 +676,18 @@ E2.descriptives_by_context<- E2.df %>%
   mutate(cong = target==context,
          resp = response==presence_key)%>%
   group_by(subj_id,cong) %>%
+  summarise(accuracy=mean(correct),
+            resp_bias=mean(resp),
+            RT=median(RT),
+            hit_rate = (sum(correct & present)+0.5)/(sum(present)+1),
+            fa_rate = (sum(!correct & !present)+0.5)/(sum(!present)+1),
+            d = qnorm(hit_rate)-qnorm(fa_rate),
+            c = -0.5*(qnorm(hit_rate)+qnorm(fa_rate)))
+
+E3.descriptives_by_occlusion<- E3.df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  mutate(resp = response==presence_key)%>%
+  group_by(subj_id,hide_proportion) %>%
   summarise(accuracy=mean(correct),
             resp_bias=mean(resp),
             RT=median(RT),
@@ -709,6 +821,45 @@ E2.quantile_plot <- E2.quantile_summary %>%
   theme(legend.pos='na')
 
 ggsave('figures/E2Quantiles_separate.png',E2.quantile_plot,width=3.5,height=3.5);
+
+E3.quantiles <- E3.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100 & correct) %>%
+  group_by(subj_id,hide_proportion) %>%
+  summarise(getQuantiles(
+    RT[resp],
+    RT[!resp],
+    c(0.5,0.75,0.9,0.95)
+  )) %>%
+  pivot_longer(cols=c('present','absent'), names_to='resp', values_to='RT')
+
+E3.quantile_occlusion_effects <- E3.quantiles %>%
+  group_by(subj_id, probs,resp) %>%
+  summarise(diff = RT[hide_proportion==0.05]-RT[hide_proportion==0.15]) %>%
+  pivot_wider(names_from=resp,values_from=diff)
+
+E3.quantile_summary <- E3.quantiles %>% 
+  group_by(subj_id) %>%
+  mutate(centeredRT = RT-mean(RT))%>%
+  group_by(hide_proportion,probs, resp) %>%
+  summarise(mean_RT=mean(RT),
+            se_RT = se(centeredRT)) %>%
+  mutate(resp=factor(resp, levels=c('present','absent')),
+         hide_proportion=factor(hide_proportion,levels=c(0.05,0.15)))
+
+E3.quantile_plot <- E3.quantile_summary %>% 
+  ggplot(aes(x=hide_proportion, 
+             y=mean_RT, 
+             color=probs,
+             group=probs)) +
+  geom_line(size=1.3)+
+  geom_errorbar(aes(ymin=mean_RT-se_RT,ymax=mean_RT+se_RT))+
+  facet_grid(~resp)+
+  labs(x='',
+       y='RT')+
+  theme_bw() +
+  theme(legend.pos='na')
+
+ggsave('figures/E3Quantiles_separate.png',E3.quantile_plot,width=3.5,height=3.5);
 
 ```
 
@@ -1662,6 +1813,32 @@ ggsave('figures/E1_RT_by_cong_resp_quartile.png',p,width=5,height=4.5)
 
 # Discussion
 
+## Alternative accounts
+
+### A two-stages account
+
+Let's consider a very simple model for Exp. 1. In this model participants sample the stimulus once every timepoint and get a binary outcome: 0 or 1. When a target is absent, the outcome is always 0. But when a target is present, the outcome will start at 0 for the first samples but then become 1 at some other random point: the time of detection $\tau$, which is sampled from a Poisson distribution with parameter $\lambda$. 
+
+The subject's task is to decide when they have enough information to make a decision. After seeing 1, the decision is easy: they should terminate immediately and report target presence. The more difficult question is when to terminate when all samples are 0, because, theoretically, a positive sample may take forever to appear. One solution is to track the (log) likelihood ratio between target presence and absence $LLR=log\frac{p(x|Present)}{p(x|Absent)}$, and terminate once this quantity reaches some threshold, for example $LLR\leq-2$. Since $p(0|Absent)=1$, this quantity equals $log(p(x|Present))$, which is the log density of the $\tau$ distribution to the right of the current timepoint. This results in a rule: for every possible threshold on the LLR $X$, the agent should terminate after $T$ timesteps, where $T$ is the lowest timepoint for which which $LLR\leq X$.
+
+(This model is cannot account for false positives, which constitute about 20% of our target-present trials, but it is a starting point).
+
+One way to model the congruency manipulation, is by a change to the $\lambda$ parameter, which makes the first sample of 1 appear faster when a target is present. If that is the case, participants' failure to adjust their target-absent decision times reflects ignorance of the difference in the $\lambda$ values between congruent and incongruent conditions. An alternative is that the $\lambda$ parameter is unchanged, and instead, on some small proportion of trials in which the context is incongruent and the target is present, the target is perceived immediately. For example, on 15% of all such trials the first sample is 1, and all other 85% trials follow the same distribution as incongruent trials. Importantly, this reflects a change to the distribution of target detection times, moving more of its mass toward 0, and making long sequences of zeros less likely when a target is present. Subjects should still update their target-absent decision times if they want to use a similar criterion in both conditions.  
+
+A similar account may be more plausible in the case of Exp. 3. For example, on a certain proportion of trials in which the target is a 3 in the distractors are letters, the target may immediately pop out to attention (first parallel stage). On all other trials, searching for a 3 or an E among letters is just as efficient, and requires serial scanning. If participants' only decision is about whether they should serially scan the display or not, deciding not to serially scan on 3-in-letters searches will result in missing the targets on all trials in which the target did not pop out to attention. This is not the case if subjects have control over the number of items they want to attend to before terminating. 
+
+### Fixed criterion
+
+An alternative explanation is that subjects are unable to dynamically adapt their decision criterion between trials within the same block, regardless of whether they are aware of differences in visibility or not. For example,  @gorea2000failure found that subjects were unable to optimally set their decision criterion in a detection task involving two stimulus categories of low and high contrast, even when subjects were informed about the differences in visibility levels. Participants' false alarm rates were best accounted for by a model in which subjects marginalize over stimulus categories in extracting a likelihood ratio for making a decision. 
+
+It is worth noting that in other contexts, subjects have been shown to dynamically adjust their decision criterion between trials according to expected visibility. For example, @mazor2022efficient found that subjects were able to adaptively adjust their search times according to the expected difficulty of visual search trials even when presented within the same block. One possibility, however, is that what is possible for a visual search task is not possible for a near-threshold detection task. According to this account, subjects do know to expect that the perception of a letter would be easier in a congruent context, but they are unable to apply different decision thredholds within the same block.
+
+### Speed-accuracy trade-off
+
+Maybe subjects are aware of these differences in expected visibility between the two conditions, but they decide to enjoy the accuracy boost afforded by a congruent context without adjusting their decision times to equate accuracy between the two conditions. For example, a subject may know that 90% of all incongruent and 95% of all congruent targets would be detected within 2750 ms, and decide to set their decision criterion to 2750 and miss 10% of all incongruent and 5% of all congruent targets. This can be tested using a forced-stop paradigm. 
+
+
+### 
 
 \newpage
 
