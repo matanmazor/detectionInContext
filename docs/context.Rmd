@@ -47,20 +47,20 @@ draft             : no
 documentclass     : "apa6"
 classoption       : "man"
 output            : papaja::apa6_word
+bibliography: references.bib
 ---
 
 # Introduction
 
 After checking Taylor Swift's Wikipedia page, we are confident that she hasn't announced her retirement from music. If she had, it would have been mentioned on her page. We also checked Russian cellist Natalia Gutman's page and didn't see any mention of a similar announcement, but we are not so sure she hasn't made one since her Wikipedia page only gets updated irregularly. The absence of evidence on Wikipedia is enough to make a solid inference in the case of Swift but not in the case of Gutman because we know that information about Swift spreads more efficiently on the internet.
 
-This paper discusses how we make inferences based on the absence of evidence in visual perception. Such inferences about the negation of a hypothesis ($H$) depend on our belief in the probability that we would observe evidence ($E$) if $H$ were true ($p(E|H)$) [@walton1992nonfallacious; @walton2010arguments; @oaksford2004bayesian]. In other words, we believe that something is not true (for example, that Taylor Swift hasn't announced her retirement from music) when we believe that "if it were true, we would have heard about it by now" [@goldberg2011if]. 
+This paper discusses how we make inferences based on the absence of evidence in visual perception. Such inferences about the negation of a hypothesis ($H$) depend on our belief in the probability that we would observe evidence ($E$) if $H$ were true ($p(E|H)$) [@walton1992nonfallacious; @walton2010arguments; @oaksford2004bayesian]. In other words, we believe that something is not true (for example, that Taylor Swift hasn't announced her retirement from music) when we believe that "if it were true, we would have heard about it by now" [@goldberg2011if].
 
 Here we examine how people apply a similar reasoning in the domain of visual perception. Simply not perceiving something doesn't mean that it's not there. We also need to be certain that we would have perceived it if it were present. As a result, the timing of decisions about absence provides valuable insight into people's implicit beliefs about their perception and attention. Rapid decisions about absence reflect a belief that presence would have been detected quickly and easily, while slow decisions reflect a belief that presence would have taken longer to detect [@mazor2021inference; @mazor2022efficient].
 
-To contrast cases in which perception is fast versus slow, we make use of a robust finding in visual cognition: our perception of objects is affected by context. For example, we perceive objects better in their natural surroundings [@rossel2022makes] and we perceive letters better as part of a word [@heilbron2020word]. In this study, we're not focusing on how well participants can perceive objects, but on how quickly they can infer their absence when they're not there. For example, if people believe that objects are easier to perceive in their natural context, this should affect the timing of their decisions about absence: they should be able to quickly decide that an object is missing in a context that allows for speedy perception. But if they are not aware of these context effects, speedy detection will not translate to speedy inference about absence. 
+To contrast cases in which perception is fast versus slow, we make use of a robust finding in visual cognition: our perception of objects is affected by context. For example, we perceive objects better in their natural surroundings [@rossel2022makes] and we perceive letters better as part of a word [@heilbron2020word]. In this study, we're not focusing on how well participants can perceive objects, but on how quickly they can infer their absence when they're not there. For example, if people believe that objects are easier to perceive in their natural context, this should affect the timing of their decisions about absence: they should be able to quickly decide that an object is missing in a context that allows for speedy perception. But if they are not aware of these context effects, speedy detection will not translate to speedy inference about absence.
 
-We tested context effects on decisions about absence in two settings: a near-threshold detection setting, where perception is better in matching, congruent contexts, and a visual search setting where target detection is facilitated in non-matching, or incongruent contexts. In both cases we find that subjects fail to properly adjust the timing of their decisions about absence, revealing no insight into context effects on perception. 
-
+We tested context effects on decisions about absence in two settings: a near-threshold detection setting, where perception is better in matching, congruent contexts, and a visual search setting where target detection is facilitated in non-matching, or incongruent contexts. In both cases we find that subjects fail to properly adjust the timing of their decisions about absence, revealing no insight into context effects on perception.
 
 ```{r setup, include = FALSE}
 
@@ -108,11 +108,9 @@ def to_csv(filename):
 
 ```
 
-
-
 # Exp. 1
 
-We report how we determined our sample size, all data exclusions (if any), all manipulations, and all measures in the study. 
+We report how we determined our sample size, all data exclusions (if any), all manipulations, and all measures in the study.
 
 ## Participants
 
@@ -126,17 +124,17 @@ Participants detected the presence or absence of a target letter (S or A, in dif
 knitr::include_graphics("figures/design.png")
 ```
 
-After reading the instructions, participants completed four practice trials. In case their accuracy in these four practice trials fell below 3/4, they were reminded of task instructions and given additional practice trials, until reaching the desired accuracy level. Otherwise, they continued to the main part of the experiment. Here, their task was exactly the same, but the noise patch was embedded in a congruent or incongruent context word. For example, when searching for the letter S, the context word CA_H (cash) is congruent but the context word FL_G (flag) is not (see Fig. \@ref(fig:design), upper right panel). To make sure participants are primed with the correct reading of the context word, an image of its meaning was presented for 500 ms following the fixation cross and prior to the presentation of the noise display. Participants were instructed to ignore the image and surrounding letters, and focus on the central stimuli. 
+After reading the instructions, participants completed four practice trials. In case their accuracy in these four practice trials fell below 3/4, they were reminded of task instructions and given additional practice trials, until reaching the desired accuracy level. Otherwise, they continued to the main part of the experiment. Here, their task was exactly the same, but the noise patch was embedded in a congruent or incongruent context word. For example, when searching for the letter S, the context word CA_H (cash) is congruent but the context word FL_G (flag) is not (see Fig. \@ref(fig:design), upper right panel). To make sure participants are primed with the correct reading of the context word, an image of its meaning was presented for 500 ms following the fixation cross and prior to the presentation of the noise display. Participants were instructed to ignore the image and surrounding letters, and focus on the central stimuli.
 
-The main part of the experiment comprised four blocks of 16 trials. For approximately half of the participants, in blocks 1 and 2 the target letter was S and in blocks 3 and 4 it was A. The order of letters was reversed for the other half. All context words were presented twice: once when detecting the letter S and once when detecting the letter A. As a result, all context words were presented both as congruent and as incongruent contexts for the target letter. Overall, there were 32 context words: 16 where the missing letter is an A and 16 where it is an S. All words were 4- or 5-letter nouns with S or A in one of the central positions (i.e., position 2 or 3 in 4-letter words and position 3 in 5-letter words). 
+The main part of the experiment comprised four blocks of 16 trials. For approximately half of the participants, in blocks 1 and 2 the target letter was S and in blocks 3 and 4 it was A. The order of letters was reversed for the other half. All context words were presented twice: once when detecting the letter S and once when detecting the letter A. As a result, all context words were presented both as congruent and as incongruent contexts for the target letter. Overall, there were 32 context words: 16 where the missing letter is an A and 16 where it is an S. All words were 4- or 5-letter nouns with S or A in one of the central positions (i.e., position 2 or 3 in 4-letter words and position 3 in 5-letter words).
 
 ### Randomization
 
-The order and timing of experimental events was determined pseudo-randomly by the Mersenne Twister pseudorandom number generator, initialized in a way that ensures registration time-locking [@mazor2018novel]. 
+The order and timing of experimental events was determined pseudo-randomly by the Mersenne Twister pseudorandom number generator, initialized in a way that ensures registration time-locking [@mazor2018novel].
 
 ## Results
 
-We used `r cite_r(file = "r-references.bib", pkgs = c("dplyr", "ggplot2", "tidyverse","papaja","broom"), withhold = FALSE)` for all our analyses. 
+We used `r cite_r(file = "r-references.bib", pkgs = c("dplyr", "ggplot2", "tidyverse","papaja","broom"), withhold = FALSE)` for all our analyses.
 
 ```{r load_and_format_data, echo=FALSE, cache=TRUE}
 E1.raw_df <- read_csv('../experiments/letters/data/jatos_resultfiles_batch1/all_data.csv') %>%
@@ -271,8 +269,6 @@ E3.df <- E3.raw_df %>%
   filter(!(subj_id %in% E3.to_exclude));
 ```
 
-
-
 ```{r plot_visibility_per_frame, echo=FALSE, cache=TRUE}
 
 
@@ -341,8 +337,7 @@ E3.overall_descriptives <- E3.df %>%
             c = -0.5*(qnorm(hit_rate)+qnorm(fa_rate)));
 ```
 
-`r E1.raw_df%>%pull(subj_id)%>%unique()%>%length()` participants completed the task. Mean accuracy in the main block experiment was `r E1.overall_descriptives%>%pull(accuracy)%>%mean()` (SD=`r E1.overall_descriptives%>%pull(accuracy)%>%sd()`). The mean median response time was `r printnum(E1.overall_descriptives%>%pull(RT)%>%mean()/1000)` seconds (SD=`r printnum(E1.overall_descriptives%>%pull(RT)%>%sd()/1000)`). No participants were excluded based on our pre-registered accuracy lower bound of 50%, and based on our pre-registered criterion for making hasty responses (RT<100 ms in more than 25% of the trials). We also pre-registered a plan to exclude participants with extremely slow reaction times (above 5 seconds in more than 25% of the trials), and to exclude trials with response times above 5 seconds. However, slower than expected responses meant that our pre-registered response-time dependent exclusion criteria were unfit to the data: excluding participants with more than 25% of trials slower than 5 seconds meant excluding `r E1.too_slow%>%length()` of our `r E1.raw_df%>%pull(subj_id)%>%unique()%>%length()` participants and biasing our sample. We therefore decided to revise our plan and to include participants and trials with slow responses. 
-
+`r E1.raw_df%>%pull(subj_id)%>%unique()%>%length()` participants completed the task. Mean accuracy in the main block experiment was `r E1.overall_descriptives%>%pull(accuracy)%>%mean()` (SD=`r E1.overall_descriptives%>%pull(accuracy)%>%sd()`). The mean median response time was `r printnum(E1.overall_descriptives%>%pull(RT)%>%mean()/1000)` seconds (SD=`r printnum(E1.overall_descriptives%>%pull(RT)%>%sd()/1000)`). No participants were excluded based on our pre-registered accuracy lower bound of 50%, and based on our pre-registered criterion for making hasty responses (RT\<100 ms in more than 25% of the trials). We also pre-registered a plan to exclude participants with extremely slow reaction times (above 5 seconds in more than 25% of the trials), and to exclude trials with response times above 5 seconds. However, slower than expected responses meant that our pre-registered response-time dependent exclusion criteria were unfit to the data: excluding participants with more than 25% of trials slower than 5 seconds meant excluding `r E1.too_slow%>%length()` of our `r E1.raw_df%>%pull(subj_id)%>%unique()%>%length()` participants and biasing our sample. We therefore decided to revise our plan and to include participants and trials with slow responses.
 
 ```{r H1, echo=FALSE, cache=TRUE}
 
@@ -481,10 +476,9 @@ E3.RT_by_occlusion_in_presence_correct_only <- E3.df %>%
   mutate(diff=hide_proportion0.05-hide_proportion0.15);
 ```
 
-Since decisions about absence are reached only when the subject can be confident that presence would have been detected, they are commonly slower than decisions about presence [@mazor2021stage]. Indeed, response times were significantly shorter in decisions about presence compared to absence (pre-registered Hypothesis 1: `r printnum(E1.RT_by_resp%>%pull(respTRUE)%>%mean()/1000)` vs `r printnum(E1.RT_by_resp%>%pull(respFALSE)%>%mean()/1000)` seconds; `r apa_print(E1.RT_by_resp%>%pull(diff)%>%t.test())$statistic`). 
+Since decisions about absence are reached only when the subject can be confident that presence would have been detected, they are commonly slower than decisions about presence [@mazor2021stage]. Indeed, response times were significantly shorter in decisions about presence compared to absence (pre-registered Hypothesis 1: `r printnum(E1.RT_by_resp%>%pull(respTRUE)%>%mean()/1000)` vs `r printnum(E1.RT_by_resp%>%pull(respFALSE)%>%mean()/1000)` seconds; `r apa_print(E1.RT_by_resp%>%pull(diff)%>%t.test())$statistic`).
 
 Turning to context effects on detection, target-present decisions were significantly faster when the target letter appeared in a congruent compared to an incongruent context (pre-registered Hypothesis 2: `r printnum(E1.RT_by_context_in_presence%>%pull(congTRUE)%>%mean()/1000)` vs `r printnum(E1.RT_by_context_in_presence%>%pull(congFALSE)%>%mean()/1000)` seconds; `r apa_print(E1.RT_by_context_in_presence%>%pull(diff)%>%t.test())$statistic`). This was also the case when restricting the analysis to correct responses only (`r printnum(E1.RT_by_context_in_presence_correct_only%>%pull(congTRUE)%>%mean()/1000)` vs `r printnum(E1.RT_by_context_in_presence_correct_only%>%pull(congFALSE)%>%mean()/1000)` seconds; `r apa_print(E1.RT_by_context_in_presence_correct_only%>%pull(diff)%>%t.test())$statistic`). This finding is consistent with previous reports of sensory sharpening effects of context congruency [@rossel2022makes; @heilbron2020word].
-
 
 ```{r H3, echo=FALSE, cache=TRUE}
 
@@ -583,7 +577,6 @@ E3.RT_by_occlusion_in_absence_correct_only <- E3.df %>%
   mutate(diff=hide_proportion0.05-hide_proportion0.15);
 ```
 
-
 ```{r H4, echo=FALSE, cache=TRUE}
 
 E1.RT_by_context_and_response <- merge(
@@ -659,7 +652,7 @@ E3.RT_by_occlusion_and_response_correct_only <- merge(
 
 Critically, and in contrast to decisions about presence, the timing of decisions about absence was similar when the target letter was missing from a congruent or incongruent context (pre-registered Hypothesis 3: `r printnum(E1.RT_by_context_in_absence%>%pull(congTRUE)%>%mean()/1000)` vs `r printnum(E1.RT_by_context_in_absence%>%pull(congFALSE)%>%mean()/1000)` seconds; `r apa_print(E1.RT_by_context_in_absence%>%pull(diff)%>%t.test())$statistic`). Similarly, we found no effect of context on RT in decisions about absence also when restricting our analysis to correct trials only (`r apa_print(E1.RT_by_context_in_absence_correct_only%>%pull(diff)%>%t.test())$statistic`). Furthermore, the effect of context congruency on response time was stronger in decisions about target presence, compared to decisions about target absence (pre-registered Hypothesis 4: `r apa_print(E1.RT_by_context_and_response%>%pull(interaction)%>%t.test())$statistic`), also when restricting the analysis to correct responses only (`r apa_print(E1.RT_by_context_and_response_correct_only%>%pull(interaction)%>%t.test())$statistic`).
 
-(ref:Exp12) Reaction time results, Exp. 1 and 2. Showing the mean subject-wise estimate of the 50%, 75%, 90% and 9% RT quantiles, as a function of target-context congruency and target presence. Correct responses only. Error bars represent the standard error of congruency effects, removing inter-subject variability. \*: p<0.05, \*\*: p<0.01, \*\*\*: p<0.001
+(ref:Exp12) Reaction time results, Exp. 1 and 2. Showing the mean subject-wise estimate of the 50%, 75%, 90% and 9% RT quantiles, as a function of target-context congruency and target presence. Correct responses only. Error bars represent the standard error of congruency effects, removing inter-subject variability. \*: p\<0.05, \*\*: p\<0.01, \*\*\*: p\<0.001
 
 ```{r Exp12results, echo=FALSE, fig.cap="(ref:Exp12)", out.width = '75%'}
 knitr::include_graphics("figures/quantiles_separate.png")
@@ -705,13 +698,14 @@ E3.descriptives_by_occlusion<- E3.df %>%
             d = qnorm(hit_rate)-qnorm(fa_rate),
             c = -0.5*(qnorm(hit_rate)+qnorm(fa_rate)))
 ```
+
 Consistent with a sensory sharpening effect, signal detection sensitivity was significantly higher in congruent contexts (pre-registered Hypothesis 5: `r apa_print(E1.descriptives_by_context %>%select(subj_id,cong,d)%>%spread(cong,d,sep='')%>%mutate(diff=congTRUE-congFALSE)%>%pull(diff)%>%t.test)$statistic`), with `r E1.descriptives_by_context %>%filter(cong)%>%pull(d)%>%mean() %>%printnum()` (SD=`r E1.descriptives_by_context %>%filter(cong)%>%pull(d)%>%sd()%>%printnum()`) when the context matched the target letter, and `r E1.descriptives_by_context %>%filter(!cong)%>%pull(d)%>%mean() %>%printnum()` (SD=`r E1.descriptives_by_context %>%filter(!cong)%>%pull(d)%>%sd()%>%printnum()`) when it did not match the target letter. This effect was driven by an increase in hit rate (`r apa_print(E1.descriptives_by_context %>%select(subj_id,cong,hit_rate)%>%spread(cong,hit_rate,sep='')%>%mutate(diff=congTRUE-congFALSE)%>%pull(diff)%>%t.test)$statistic`), without an effect on the false-positive rate (`r apa_print(E1.descriptives_by_context %>%select(subj_id,cong,fa_rate)%>%spread(cong,fa_rate,sep='')%>%mutate(diff=congTRUE-congFALSE)%>%pull(diff)%>%t.test)$statistic`).
 
 The signal detection criterion was overall positive, indicating that participants were conservative in their responses. We found no significant difference in decision criterion between congruent (`r E1.descriptives_by_context %>%filter(cong)%>%pull(c)%>%mean() %>%printnum()`; SD=`r E1.descriptives_by_context %>%filter(cong)%>%pull(c)%>%sd()%>%printnum()`) and incongruent (`r E1.descriptives_by_context %>%filter(!cong)%>%pull(c)%>%mean() %>%printnum()`; SD=`r E1.descriptives_by_context %>%filter(!cong)%>%pull(c)%>%sd()%>%printnum()`) contexts (pre-registered Hypothesis 6: `r apa_print(E1.descriptives_by_context %>%select(subj_id,cong,c)%>%spread(cong,c,sep='')%>%mutate(diff=congTRUE-congFALSE)%>%pull(diff)%>%t.test)$statistic`).
 
 # Exp. 2: immediate appearance
 
-We were concerned that subjects' failure to incorporate context information into decisions about absence in Exp. 1 was driven in part by the gradual appearance of the target letter. The time scale in which the letter emerged (seconds), may have been too slow relative to the effects of contexts on perception (tens of milliseconds). In Exp. 2, we used a similar paradigm but had the letters appear immediately on target-present trials, together with the context letters. We also increased our sample size, given effect size estimates from Exp. 1. 
+We were concerned that subjects' failure to incorporate context information into decisions about absence in Exp. 1 was driven in part by the gradual appearance of the target letter. The time scale in which the letter emerged (seconds), may have been too slow relative to the effects of contexts on perception (tens of milliseconds). In Exp. 2, we used a similar paradigm but had the letters appear immediately on target-present trials, together with the context letters. We also increased our sample size, given effect size estimates from Exp. 1.
 
 ## Participants
 
@@ -723,20 +717,17 @@ Exp. 2 was identical to Exp. 1, except two changes. Most importantly, instead of
 
 ## results
 
+Overall, in Exp. 2 we successfully replicated the main results of Exp. 1: subjects were faster to detect the presence of a target letter in a congruent context, but this context effect did not extend to decisions about absence.
 
+Mean accuracy in the main experiment was `r E2.overall_descriptives%>%pull(accuracy)%>%mean()%>%printnum()` (SD=`r E2.overall_descriptives%>%pull(accuracy)%>%sd()%>%printnum()`). The mean median response time was `r printnum(E2.overall_descriptives%>%pull(RT)%>%mean()/1000)` seconds (SD=`r printnum(E2.overall_descriptives%>%pull(RT)%>%sd()/1000)`). Similar to Exp. 1, response times were significantly shorter in decisions about presence compared to absence (pre-registered Hypothesis 1: `r printnum(E2.RT_by_resp%>%pull(respTRUE)%>%mean()/1000)` vs `r printnum(E2.RT_by_resp%>%pull(respFALSE)%>%mean()/1000)` seconds; `r apa_print(E2.RT_by_resp%>%pull(diff)%>%t.test())$statistic`).
 
-Overall, in Exp. 2 we successfully replicated the main results of Exp. 1: subjects were faster to detect the presence of a target letter in a congruent context, but this context effect did not extend to decisions about absence. 
-
-Mean accuracy in the main experiment was `r E2.overall_descriptives%>%pull(accuracy)%>%mean()%>%printnum()` (SD=`r E2.overall_descriptives%>%pull(accuracy)%>%sd()%>%printnum()`). The mean median response time was `r printnum(E2.overall_descriptives%>%pull(RT)%>%mean()/1000)` seconds (SD=`r printnum(E2.overall_descriptives%>%pull(RT)%>%sd()/1000)`).  Similar to Exp. 1, response times were significantly shorter in decisions about presence compared to absence (pre-registered Hypothesis 1: `r printnum(E2.RT_by_resp%>%pull(respTRUE)%>%mean()/1000)` vs `r printnum(E2.RT_by_resp%>%pull(respFALSE)%>%mean()/1000)` seconds; `r apa_print(E2.RT_by_resp%>%pull(diff)%>%t.test())$statistic`). 
-
-Target-present decisions were again faster when the target letter appeared in a congruent context, consistent with sensory sharpening (pre-registered Hypothesis 2: `r printnum(E2.RT_by_context_in_presence%>%pull(congTRUE)%>%mean()/1000)` vs `r printnum(E2.RT_by_context_in_presence%>%pull(congFALSE)%>%mean()/1000)` seconds; `r apa_print(E2.RT_by_context_in_presence%>%pull(diff)%>%t.test())$statistic`). This was also the case when restricting the analysis to correct responses (`r printnum(E2.RT_by_context_in_presence_correct_only%>%pull(congTRUE)%>%mean()/1000)` vs `r printnum(E2.RT_by_context_in_presence_correct_only%>%pull(congFALSE)%>%mean()/1000)` seconds; `r apa_print(E2.RT_by_context_in_presence_correct_only%>%pull(diff)%>%t.test())$statistic`). 
+Target-present decisions were again faster when the target letter appeared in a congruent context, consistent with sensory sharpening (pre-registered Hypothesis 2: `r printnum(E2.RT_by_context_in_presence%>%pull(congTRUE)%>%mean()/1000)` vs `r printnum(E2.RT_by_context_in_presence%>%pull(congFALSE)%>%mean()/1000)` seconds; `r apa_print(E2.RT_by_context_in_presence%>%pull(diff)%>%t.test())$statistic`). This was also the case when restricting the analysis to correct responses (`r printnum(E2.RT_by_context_in_presence_correct_only%>%pull(congTRUE)%>%mean()/1000)` vs `r printnum(E2.RT_by_context_in_presence_correct_only%>%pull(congFALSE)%>%mean()/1000)` seconds; `r apa_print(E2.RT_by_context_in_presence_correct_only%>%pull(diff)%>%t.test())$statistic`).
 
 Replicating Exp. 1, the timing of decisions about absence was unaffected by the context manipulation (pre-registered Hypothesis 3: `r printnum(E2.RT_by_context_in_absence%>%pull(congTRUE)%>%mean()/1000)` vs `r printnum(E2.RT_by_context_in_absence%>%pull(congFALSE)%>%mean()/1000)` seconds; `r apa_print(E2.RT_by_context_in_absence%>%pull(diff)%>%t.test())$statistic`), also when restricting our analysis to correct trials only (`r apa_print(E2.RT_by_context_in_absence_correct_only%>%pull(diff)%>%t.test())$statistic`). Most importantly, the effect of context congruency on response time was stronger in decisions about target presence, compared to decisions about target absence (pre-registered Hypothesis 4: `r apa_print(E2.RT_by_context_and_response%>%pull(interaction)%>%t.test())$statistic`), even when restricting the analysis to correct responses only (`r apa_print(E2.RT_by_context_and_response_correct_only%>%pull(interaction)%>%t.test())$statistic`).
 
-Turning to accuracy and bias measures, sensitivity was significantly higher in congruent contexts (pre-registered Hypothesis 5: `r E2.descriptives_by_context %>%filter(cong)%>%pull(d)%>%mean() %>%printnum()` versus `r E2.descriptives_by_context %>%filter(!cong)%>%pull(d)%>%mean() %>%printnum()`; `r apa_print(E2.descriptives_by_context %>%select(subj_id,cong,d)%>%spread(cong,d,sep='')%>%mutate(diff=congTRUE-congFALSE)%>%pull(diff)%>%t.test)$statistic`).  This effect was driven by an increase in hit rate (`r apa_print(E2.descriptives_by_context %>%select(subj_id,cong,hit_rate)%>%spread(cong,hit_rate,sep='')%>%mutate(diff=congTRUE-congFALSE)%>%pull(diff)%>%t.test)$statistic`), without an effect on the false-positive rate (`r apa_print(E2.descriptives_by_context %>%select(subj_id,cong,fa_rate)%>%spread(cong,fa_rate,sep='')%>%mutate(diff=congTRUE-congFALSE)%>%pull(diff)%>%t.test)$statistic`).
+Turning to accuracy and bias measures, sensitivity was significantly higher in congruent contexts (pre-registered Hypothesis 5: `r E2.descriptives_by_context %>%filter(cong)%>%pull(d)%>%mean() %>%printnum()` versus `r E2.descriptives_by_context %>%filter(!cong)%>%pull(d)%>%mean() %>%printnum()`; `r apa_print(E2.descriptives_by_context %>%select(subj_id,cong,d)%>%spread(cong,d,sep='')%>%mutate(diff=congTRUE-congFALSE)%>%pull(diff)%>%t.test)$statistic`). This effect was driven by an increase in hit rate (`r apa_print(E2.descriptives_by_context %>%select(subj_id,cong,hit_rate)%>%spread(cong,hit_rate,sep='')%>%mutate(diff=congTRUE-congFALSE)%>%pull(diff)%>%t.test)$statistic`), without an effect on the false-positive rate (`r apa_print(E2.descriptives_by_context %>%select(subj_id,cong,fa_rate)%>%spread(cong,fa_rate,sep='')%>%mutate(diff=congTRUE-congFALSE)%>%pull(diff)%>%t.test)$statistic`).
 
-Finally, the signal detection criterion was overall positive and lower in congruent (`r E2.descriptives_by_context %>%filter(cong)%>%pull(c)%>%mean() %>%printnum()`; SD=`r E2.descriptives_by_context %>%filter(cong)%>%pull(c)%>%sd()%>%printnum()`) than in incongruent (`r E2.descriptives_by_context %>%filter(!cong)%>%pull(c)%>%mean() %>%printnum()`; SD=`r E2.descriptives_by_context %>%filter(!cong)%>%pull(c)%>%sd()%>%printnum()`) contexts (`r apa_print(E2.descriptives_by_context %>%select(subj_id,cong,c)%>%spread(cong,c,sep='')%>%mutate(diff=congTRUE-congFALSE)%>%pull(diff)%>%t.test)$statistic`). This is in contrast to our finding from Exp. 1, where context had no effect on decision criterion.  
-
+Finally, the signal detection criterion was overall positive and lower in congruent (`r E2.descriptives_by_context %>%filter(cong)%>%pull(c)%>%mean() %>%printnum()`; SD=`r E2.descriptives_by_context %>%filter(cong)%>%pull(c)%>%sd()%>%printnum()`) than in incongruent (`r E2.descriptives_by_context %>%filter(!cong)%>%pull(c)%>%mean() %>%printnum()`; SD=`r E2.descriptives_by_context %>%filter(!cong)%>%pull(c)%>%sd()%>%printnum()`) contexts (`r apa_print(E2.descriptives_by_context %>%select(subj_id,cong,c)%>%spread(cong,c,sep='')%>%mutate(diff=congTRUE-congFALSE)%>%pull(diff)%>%t.test)$statistic`). This is in contrast to our finding from Exp. 1, where context had no effect on decision criterion.
 
 ```{r quantiles, echo=FALSE, cache=TRUE}
 
@@ -874,10 +865,9 @@ ggsave('figures/E3Quantiles_separate.png',E3.quantile_plot,width=3.5,height=3.5)
 
 ## Exploratory analysis: the tails of the RT distribution
 
-The absence of a congruency effect on target-absent decision times may be rational if a congruent context has a negative effect on the central tendency of reaction time distributions, without affecting the timing of the slowest responses. For example, if subjects are willing to tolerate a miss rate of 10%, their target-absent decision times should not be set according to the median reaction time, but according to the 90th quantile [@liesefeld2016search]. We therefore tested Hypotheses 2 again, but this time using the 90% quantile of the target-present RT distribution instead of its median. 
+The absence of a congruency effect on target-absent decision times may be rational if a congruent context has a negative effect on the central tendency of reaction time distributions, without affecting the timing of the slowest responses. For example, if subjects are willing to tolerate a miss rate of 10%, their target-absent decision times should not be set according to the median reaction time, but according to the 90th quantile [@liesefeld2016search]. We therefore tested Hypotheses 2 again, but this time using the 90% quantile of the target-present RT distribution instead of its median.
 
-In Exp. 1, target-present responses in the 90% quantile were faster by `r E1.quantile_congruency_effects %>%filter(probs==0.90)%>%pull(present)%>%mean()%>%abs()%>%round()` ms. in the congruent condition, but this effect was not significant (`r E1.quantile_congruency_effects %>%filter(probs==0.90)%>%pull(present)%>%t.test()%>%apa_print()%>%'$'(statistic)`). 
-In Exp. 2, a difference of `r E2.quantile_congruency_effects %>%filter(probs==0.90)%>%pull(present)%>%mean()%>%abs()%>%round()` ms. in the same contrast reached significance (`r E2.quantile_congruency_effects %>%filter(probs==0.90)%>%pull(present)%>%t.test()%>%apa_print()%>%'$'(full_result)`). Similarly, a congruency effect of `r E2.quantile_congruency_effects %>%filter(probs==0.95)%>%pull(present)%>%mean()%>%abs()%>%round()` ms. was observed for 95% quantile target-present response times (`r E2.quantile_congruency_effects %>%filter(probs==0.95)%>%pull(present)%>%t.test()%>%apa_print()%>%'$'(full_result)`). Therefore, the absence of a context effct in target-absent trials cannot be explained by subjects adjusting their target-absent decisions times according to the slowest target-present responses.
+In Exp. 1, target-present responses in the 90% quantile were faster by `r E1.quantile_congruency_effects %>%filter(probs==0.90)%>%pull(present)%>%mean()%>%abs()%>%round()` ms. in the congruent condition, but this effect was not significant (`r E1.quantile_congruency_effects %>%filter(probs==0.90)%>%pull(present)%>%t.test()%>%apa_print()%>%'$'(statistic)`). In Exp. 2, a difference of `r E2.quantile_congruency_effects %>%filter(probs==0.90)%>%pull(present)%>%mean()%>%abs()%>%round()` ms. in the same contrast reached significance (`r E2.quantile_congruency_effects %>%filter(probs==0.90)%>%pull(present)%>%t.test()%>%apa_print()%>%'$'(full_result)`). Similarly, a congruency effect of `r E2.quantile_congruency_effects %>%filter(probs==0.95)%>%pull(present)%>%mean()%>%abs()%>%round()` ms. was observed for 95% quantile target-present response times (`r E2.quantile_congruency_effects %>%filter(probs==0.95)%>%pull(present)%>%t.test()%>%apa_print()%>%'$'(full_result)`). Therefore, the absence of a context effct in target-absent trials cannot be explained by subjects adjusting their target-absent decisions times according to the slowest target-present responses.
 
 # Exp. 3: visual search
 
@@ -949,28 +939,26 @@ E3.summary_stats = E3.df %>%
             RT50=quantile(RT,0.50),
             RT75=quantile(RT,0.75))
 ```
+
 ## Participants
 
 We collected data from a total of `r E3.N_total` participants, recruited on Prolific. The entire experiment took 13:15 minutes to complete. Participants were paid £1.80 for their participation, equivalent to an hourly wage of £8.15. The data of `r E3.df$subj_id%>%unique()%>%length()` participants met our inclusion criteria and were used for the main analysis, after excluding `r E3.low_accuracy%>%length()` participants for performing below our pre-registered 75% accuracy cut-off.
 
-
 ## Procedure
 
-Participants were first instructed about the visual search task. Specifically, that their task is to report, as accurately and quickly as possible, whether a target stimulus was present (press 'J') or absent (press 'F'). Then, practice trials were delivered, in which the target stimulus is a rotated T and distractors are L's. The purpose of the practice trials was to familiarize participants with the structure of the task. For these practice trials the number of items was always 3. Practice trials were delivered in small blocks of 6 trials each, and the main part of the experiment started only once participants responded correctly on at least five trials in a block (see Figure \@ref(fig:design-vs)). 
-
+Participants were first instructed about the visual search task. Specifically, that their task is to report, as accurately and quickly as possible, whether a target stimulus was present (press 'J') or absent (press 'F'). Then, practice trials were delivered, in which the target stimulus is a rotated T and distractors are L's. The purpose of the practice trials was to familiarize participants with the structure of the task. For these practice trials the number of items was always 3. Practice trials were delivered in small blocks of 6 trials each, and the main part of the experiment started only once participants responded correctly on at least five trials in a block (see Figure \@ref(fig:design-vs)).
 
 ```{r design-vs, echo=FALSE, fig.cap="Experimental design. Top panel: each visual search trial started with a screen indicating the target stimulus. The search display remained visible until a response was recorded. To motivate accurate responses, the feedback screen remained visible for one second following correct responses and for four seconds following errors. Middle panel: after reading the instructions, participants practiced the visual search task in blocks of 6 trials, until they reached an accuracy level of 5/6 correct or higher (at most one error per block of 6 trials). Bottom panel: the main part of the experiment comprised six blocks of 16 trials each, in which the target was a 3 or an E, set size 3 or 12, and distractors letters or numbers.", out.width = '60%'}
 knitr::include_graphics("figures/designVS2.png")
 ```
-The main part of the experiment comprised two conditions (searching for the letter E, or for the digit 3), presented in six blocks. The order of conditions was counterbalanced across participants. 
 
-Set size (3 or 12), distractor set (the digits 8 and 2 or the letters A and H), and target presence were manipulated independently within a block. The first four trials in the third and sixth blocks were target-absent trials: 3 letter, 12 letters, 3 digits, and 12 digits. Distractors were chosen to be equally similar to the two targets in terms of the number of lines that need to be added and/or subtracted in order to get from the target letter to each of the distractors. We were able to keep both letter distractors (A and H) symmetric. Since the two targets are perfect mirror images of each other, this ensures that visual similarity to both letter targets is identical. In the case of digit distractors, however, the digit 8 is symmetric but the digit 2 is not. As a result, differences in visual search efficiency between the two targets may still be affected by visual similarity (for example, the digits 2 and 3 are both perceived as facing the left, but the letter E is facing the right). Importantly, this is the case when searching among digits, but not among letters. 
+The main part of the experiment comprised two conditions (searching for the letter E, or for the digit 3), presented in six blocks. The order of conditions was counterbalanced across participants.
+
+Set size (3 or 12), distractor set (the digits 8 and 2 or the letters A and H), and target presence were manipulated independently within a block. The first four trials in the third and sixth blocks were target-absent trials: 3 letter, 12 letters, 3 digits, and 12 digits. Distractors were chosen to be equally similar to the two targets in terms of the number of lines that need to be added and/or subtracted in order to get from the target letter to each of the distractors. We were able to keep both letter distractors (A and H) symmetric. Since the two targets are perfect mirror images of each other, this ensures that visual similarity to both letter targets is identical. In the case of digit distractors, however, the digit 8 is symmetric but the digit 2 is not. As a result, differences in visual search efficiency between the two targets may still be affected by visual similarity (for example, the digits 2 and 3 are both perceived as facing the left, but the letter E is facing the right). Importantly, this is the case when searching among digits, but not among letters.
 
 ### Randomization
 
-The order and timing of experimental events was determined pseudo-randomly by the Mersenne Twister pseudorandom number generator, initialized in a way that ensures registration time-locking [@mazor2019novel]. 
-
-
+The order and timing of experimental events was determined pseudo-randomly by the Mersenne Twister pseudorandom number generator, initialized in a way that ensures registration time-locking [@mazor2019novel].
 
 ```{r vs-search-time-analysis, echo=FALSE, cache=TRUE, warning=FALSE}
   
@@ -1110,7 +1098,7 @@ E3.firstPresence <- E3.pp_df %>%
 
 ## Results
 
-Overall accuracy was at `r E3.summary_stats$acc%>%mean()%>%printnum()` percent correct (standard deviation =`r E3.summary_stats$acc%>%sd()%>%printnum()`). The median reaction time was `r E3.summary_stats$RT50%>%median()%>%round()` ms. 
+Overall accuracy was at `r E3.summary_stats$acc%>%mean()%>%printnum()` percent correct (standard deviation =`r E3.summary_stats$acc%>%sd()%>%printnum()`). The median reaction time was `r E3.summary_stats$RT50%>%median()%>%round()` ms.
 
 our main analysis focused on search slopes: the time cost in milliseconds of each additional distractor. If semantic context affects search efficiency, the effect of additional distractors on the time needed to find the target should be affected by the category agreement between target and distractors. Indeed, target-present search slopes were steeper when the target and distractors were of the same semantic category (mean slope: `r E3.congSlopes%>%filter(target_present)%>%pull(cong)%>%mean()%>%round()` ms/item) compared to not (`r E3.congSlopes%>%filter(target_present)%>%pull(incong)%>%mean()%>%round()` ms/item; Hypothesis 1: `r E3.congSlopesTests$H1%>%t.test()%>%apa_print()%>%'$'(full_result)`). The same qualitative result was observed when restricting analysis to number distractors (`r E3.numbers.congSlopes%>%filter(target_present)%>%pull(cong)%>%mean()%>%round()` vs. `r E3.numbers.congSlopes%>%filter(target_present)%>%pull(incong)%>%mean()%>%round()` ms/item; `r E3.numbers.congSlopesTests$H1%>%t.test()%>%apa_print()%>%'$'(statistic)`), and letter distractors (`r E3.letters.congSlopes%>%filter(target_present)%>%pull(cong)%>%mean()%>%round()` vs. `r E3.letters.congSlopes%>%filter(target_present)%>%pull(incong)%>%mean()%>%round()` ms/item; `r E3.letters.congSlopesTests$H1%>%t.test()%>%apa_print()%>%'$'(statistic)`). This context effect is in the opposite direction to Exp. 1 and 2: target detection was *easier* in an *incongruent* context.
 
@@ -1118,11 +1106,9 @@ our main analysis focused on search slopes: the time cost in milliseconds of eac
 knitr::include_graphics("figures/Es3sRTs.png")
 ```
 
-
-Our main focus was again on target-absent trials. Were subjects able to terminate their searches earlier in an incongruent context, given that a target would have been detected faster? Target-absent search slopes were not significantly steeper when the target and distractors were of the same semantic category (mean slope: `r E3.congSlopes%>%filter(!target_present)%>%pull(cong)%>%mean()%>%round()` ms/item) compared to when it was unfamiliar (`r E3.congSlopes%>%filter(!target_present)%>%pull(incong)%>%mean()%>%round()` ms/item; Hypothesis 2: `r E3.congSlopesTests$H2%>%t.test()%>%apa_print()%>%'$'(full_result)`). The same qualitative result was observed when restricting analysis to number distractors (`r E3.numbers.congSlopes%>%filter(!target_present)%>%pull(cong)%>%mean(na.rm=T)%>%round()` vs. `r E3.numbers.congSlopes%>%filter(!target_present)%>%pull(incong)%>%mean()%>%round()` ms/item; `r E3.numbers.congSlopesTests$H2%>%t.test()%>%apa_print()%>%'$'(statistic)`), and to letter distractors (`r E3.letters.congSlopes%>%filter(!target_present)%>%pull(cong)%>%mean()%>%round()` vs. `r E3.letters.congSlopes%>%filter(!target_present)%>%pull(incong)%>%mean()%>%round()` ms/item; `r E3.letters.congSlopesTests$H2%>%t.test()%>%apa_print()%>%'$'(statistic)`). 
+Our main focus was again on target-absent trials. Were subjects able to terminate their searches earlier in an incongruent context, given that a target would have been detected faster? Target-absent search slopes were not significantly steeper when the target and distractors were of the same semantic category (mean slope: `r E3.congSlopes%>%filter(!target_present)%>%pull(cong)%>%mean()%>%round()` ms/item) compared to when it was unfamiliar (`r E3.congSlopes%>%filter(!target_present)%>%pull(incong)%>%mean()%>%round()` ms/item; Hypothesis 2: `r E3.congSlopesTests$H2%>%t.test()%>%apa_print()%>%'$'(full_result)`). The same qualitative result was observed when restricting analysis to number distractors (`r E3.numbers.congSlopes%>%filter(!target_present)%>%pull(cong)%>%mean(na.rm=T)%>%round()` vs. `r E3.numbers.congSlopes%>%filter(!target_present)%>%pull(incong)%>%mean()%>%round()` ms/item; `r E3.numbers.congSlopesTests$H2%>%t.test()%>%apa_print()%>%'$'(statistic)`), and to letter distractors (`r E3.letters.congSlopes%>%filter(!target_present)%>%pull(cong)%>%mean()%>%round()` vs. `r E3.letters.congSlopes%>%filter(!target_present)%>%pull(incong)%>%mean()%>%round()` ms/item; `r E3.letters.congSlopesTests$H2%>%t.test()%>%apa_print()%>%'$'(statistic)`).
 
 The congruency effect was only observed in trials where the target was present, but this doesn't necessarily mean that the effect was statistically stronger in those trials. For this, a direct comparison between the two effects is needed. However, comparing target-absent and target-absent effects directly may be too conservative because target-absent slopes are about twice as steep as target-present slopes (in our sample, this ratio was `r E3.SlopeRatio%>%printnum()`, calculated as the geometric mean of slope ratios from individual subjects). This means that under the null hypothesis that context similarly affect target-present and target-absent trials, the numerical effect on congruency should be almost twice as large in target-absent trials. We therefore compared congruency effects on target-absent trials to congruency effects on target-present trials, multiplied by this ratio of `r E3.SlopeRatio%>%printnum()`. Using this approach, the effect of target-distractor congruency was weaker in target-absent trials compared to what is expected based on target-absent trials (Hypothesis 3: `r E3.congSlopesTests$H3a%>%t.test()%>%apa_print()%>%'$'(statistic)`). This was the case for letter distractors (`r E3.letters.congSlopesTests$H3%>%t.test()%>%apa_print()%>%'$'(statistic)`), but not for number distractors (`r E3.numbers.congSlopesTests$H3%>%t.test()%>%apa_print()%>%'$'(statistic)`).
-
 
 ```{r vs-accuracy-analysis, echo=FALSE, cache=TRUE}
 
@@ -1167,8 +1153,6 @@ E3.numbers.miss_rate<- E3.df %>%
 ```
 
 Finally, we reasoned that if subjects were slower to detect a congruent target without searching for longer before concluding that it was absent, this may result in a higher miss rate in the congruent condition, as was the case in Exp. 1 and 2. However, this was not the case in Exp. 3 (Hypothesis 4: `r apa_print(E3.miss_rate$H4%>%t.test())$full_result`), similarly the effect of set size on miss rate was not statistically different between the congruent and incongruent conditions (Hypothesis 4: `r apa_print(E3.miss_rate$H5%>%t.test())$full_result`).
-
-
 
 ```{r search-time-analysis-quantile, echo=FALSE, cache=TRUE, warning=FALSE}
 
@@ -1233,7 +1217,7 @@ E3.numbers.congSlopesTests_95 <- E3.numbers.congSlopes_95 %>%
 
 ## Exploratory analysis: the tails of the RT distribution
 
-Similar to our exploratory analysis of Exp. 1 and 2, here too we tested whether similar target absent slopes for the congruent and incongruent conditions reflected similar reaction times at the tails of the distribution [@liesefeld2016search]. We therefore compared target-present search slopes extracted from the 95% quantile RT of each condition and set size. Similar to our main results, target-present slopes were steeper in the congruent condition `r apa_print(E3.congSlopesTests$H1%>%t.test())%>%'$'(full_result)`, and this was true for letter distractors `r apa_print(E3.letters.congSlopesTests$H1%>%t.test())%>%'$'(full_result)` and marginally for number distractors `r apa_print(E3.numbers.congSlopesTests$H1%>%t.test())%>%'$'(full_result)`. Here too, the absence of congruency effects in target-absent slopes was not driven by setting the search termination time according to the tail of the RT distribution. 
+Similar to our exploratory analysis of Exp. 1 and 2, here too we tested whether similar target absent slopes for the congruent and incongruent conditions reflected similar reaction times at the tails of the distribution [@liesefeld2016search]. We therefore compared target-present search slopes extracted from the 95% quantile RT of each condition and set size. Similar to our main results, target-present slopes were steeper in the congruent condition `r apa_print(E3.congSlopesTests$H1%>%t.test())%>%'$'(full_result)`, and this was true for letter distractors `r apa_print(E3.letters.congSlopesTests$H1%>%t.test())%>%'$'(full_result)` and marginally for number distractors `r apa_print(E3.numbers.congSlopesTests$H1%>%t.test())%>%'$'(full_result)`. Here too, the absence of congruency effects in target-absent slopes was not driven by setting the search termination time according to the tail of the RT distribution.
 
 ```{r search-time-figures, echo=FALSE, cache=TRUE, warning=FALSE}
 
@@ -1758,7 +1742,6 @@ E1.RT_per_cell_by_test_part %>%
   write.csv('../experiments/letters/data/jatos_resultfiles_batch1/summary_for_Clare.csv')
 ```
 
-
 ```{r format_for_nondirectional_analysis, eval=FALSE, echo=FALSE}
 E1.df %>%   
   filter((test_part=='test1' | test_part=='test2') & RT>100 & correct & resp) %>%
@@ -1819,33 +1802,31 @@ ggsave('figures/E1_RT_by_cong_resp_quartile.png',p,width=5,height=4.5)
 
 ```
 
-
 # Discussion
 
 ## Alternative accounts
 
 ### A two-stages account
 
-Let's consider a very simple model for Exp. 1. In this model participants sample the stimulus once every timepoint and get a binary outcome: 0 or 1. When a target is absent, the outcome is always 0. But when a target is present, the outcome will start at 0 for the first samples but then become 1 at some other random point: the time of detection $\tau$, which is sampled from a Poisson distribution with parameter $\lambda$. 
+Let's consider a very simple model for Exp. 1. In this model participants sample the stimulus once every timepoint and get a binary outcome: 0 or 1. When a target is absent, the outcome is always 0. But when a target is present, the outcome will start at 0 for the first samples but then become 1 at some other random point: the time of detection $\tau$, which is sampled from a Poisson distribution with parameter $\lambda$.
 
 The subject's task is to decide when they have enough information to make a decision. After seeing 1, the decision is easy: they should terminate immediately and report target presence. The more difficult question is when to terminate when all samples are 0, because, theoretically, a positive sample may take forever to appear. One solution is to track the (log) likelihood ratio between target presence and absence $LLR=log\frac{p(x|Present)}{p(x|Absent)}$, and terminate once this quantity reaches some threshold, for example $LLR\leq-2$. Since $p(0|Absent)=1$, this quantity equals $log(p(x|Present))$, which is the log density of the $\tau$ distribution to the right of the current timepoint. This results in a rule: for every possible threshold on the LLR $X$, the agent should terminate after $T$ timesteps, where $T$ is the lowest timepoint for which which $LLR\leq X$.
 
 (This model is cannot account for false positives, which constitute about 20% of our target-present trials, but it is a starting point).
 
-One way to model the congruency manipulation, is by a change to the $\lambda$ parameter, which makes the first sample of 1 appear faster when a target is present. If that is the case, participants' failure to adjust their target-absent decision times reflects ignorance of the difference in the $\lambda$ values between congruent and incongruent conditions. An alternative is that the $\lambda$ parameter is unchanged, and instead, on some small proportion of trials in which the context is incongruent and the target is present, the target is perceived immediately. For example, on 15% of all such trials the first sample is 1, and all other 85% trials follow the same distribution as incongruent trials. Importantly, this reflects a change to the distribution of target detection times, moving more of its mass toward 0, and making long sequences of zeros less likely when a target is present. Subjects should still update their target-absent decision times if they want to use a similar criterion in both conditions.  
+One way to model the congruency manipulation, is by a change to the $\lambda$ parameter, which makes the first sample of 1 appear faster when a target is present. If that is the case, participants' failure to adjust their target-absent decision times reflects ignorance of the difference in the $\lambda$ values between congruent and incongruent conditions. An alternative is that the $\lambda$ parameter is unchanged, and instead, on some small proportion of trials in which the context is incongruent and the target is present, the target is perceived immediately. For example, on 15% of all such trials the first sample is 1, and all other 85% trials follow the same distribution as incongruent trials. Importantly, this reflects a change to the distribution of target detection times, moving more of its mass toward 0, and making long sequences of zeros less likely when a target is present. Subjects should still update their target-absent decision times if they want to use a similar criterion in both conditions.
 
-A similar account may be more plausible in the case of Exp. 3. For example, on a certain proportion of trials in which the target is a 3 in the distractors are letters, the target may immediately pop out to attention (first parallel stage). On all other trials, searching for a 3 or an E among letters is just as efficient, and requires serial scanning. If participants' only decision is about whether they should serially scan the display or not, deciding not to serially scan on 3-in-letters searches will result in missing the targets on all trials in which the target did not pop out to attention. This is not the case if subjects have control over the number of items they want to attend to before terminating. 
+A similar account may be more plausible in the case of Exp. 3. For example, on a certain proportion of trials in which the target is a 3 in the distractors are letters, the target may immediately pop out to attention (first parallel stage). On all other trials, searching for a 3 or an E among letters is just as efficient, and requires serial scanning. If participants' only decision is about whether they should serially scan the display or not, deciding not to serially scan on 3-in-letters searches will result in missing the targets on all trials in which the target did not pop out to attention. This is not the case if subjects have control over the number of items they want to attend to before terminating.
 
 ### Fixed criterion
 
-An alternative explanation is that subjects are unable to dynamically adapt their decision criterion between trials within the same block, regardless of whether they are aware of differences in visibility or not. For example,  @gorea2000failure found that subjects were unable to optimally set their decision criterion in a detection task involving two stimulus categories of low and high contrast, even when subjects were informed about the differences in visibility levels. Participants' false alarm rates were best accounted for by a model in which subjects marginalize over stimulus categories in extracting a likelihood ratio for making a decision. 
+An alternative explanation is that subjects are unable to dynamically adapt their decision criterion between trials within the same block, regardless of whether they are aware of differences in visibility or not. For example, @gorea2000failure found that subjects were unable to optimally set their decision criterion in a detection task involving two stimulus categories of low and high contrast, even when subjects were informed about the differences in visibility levels. Participants' false alarm rates were best accounted for by a model in which subjects marginalize over stimulus categories in extracting a likelihood ratio for making a decision.
 
 It is worth noting that in other contexts, subjects have been shown to dynamically adjust their decision criterion between trials according to expected visibility. For example, @mazor2022efficient found that subjects were able to adaptively adjust their search times according to the expected difficulty of visual search trials even when presented within the same block. One possibility, however, is that what is possible for a visual search task is not possible for a near-threshold detection task. According to this account, subjects do know to expect that the perception of a letter would be easier in a congruent context, but they are unable to apply different decision thredholds within the same block.
 
 ### Speed-accuracy trade-off
 
-Maybe subjects are aware of these differences in expected visibility between the two conditions, but they decide to enjoy the accuracy boost afforded by a congruent context without adjusting their decision times to equate accuracy between the two conditions. For example, a subject may know that 90% of all incongruent and 95% of all congruent targets would be detected within 2750 ms, and decide to set their decision criterion to 2750 and miss 10% of all incongruent and 5% of all congruent targets. This can be tested using a forced-stop paradigm. 
-
+Maybe subjects are aware of these differences in expected visibility between the two conditions, but they decide to enjoy the accuracy boost afforded by a congruent context without adjusting their decision times to equate accuracy between the two conditions. For example, a subject may know that 90% of all incongruent and 95% of all congruent targets would be detected within 2750 ms, and decide to set their decision criterion to 2750 and miss 10% of all incongruent and 5% of all congruent targets. This can be tested using a forced-stop paradigm.
 
 ### 
 
@@ -1853,9 +1834,14 @@ Maybe subjects are aware of these differences in expected visibility between the
 
 # References
 
+```{=tex}
 \begingroup
 \setlength{\parindent}{-0.5in}
 \setlength{\leftskip}{0.5in}
+```
+::: {#refs custom-style="Bibliography"}
+:::
 
-<div id="refs" custom-style="Bibliography"></div>
+```{=tex}
 \endgroup
+```
