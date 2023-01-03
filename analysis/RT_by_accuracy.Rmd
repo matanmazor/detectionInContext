@@ -1,0 +1,167 @@
+```{r setup, include = FALSE}
+
+library('groundhog')
+groundhog.library(
+  c(
+    'papaja',
+    'reticulate',
+    'tidyverse',
+    'broom',
+    'cowplot',
+    'MESS', # for AUCs
+    'lsr', # for effect sizes
+    'pwr', # for power calculations
+    'brms', # for mixed effects modeling
+    'BayesFactor',# for Bayesian t test
+    'jsonlite', #parsing data from sort_trial
+    'afex' #for anova
+  ), "2022-12-01"
+)
+r_refs("r-references.bib")
+
+```
+
+```{r quantiles_by_acc, echo=FALSE, cache=TRUE}
+
+
+# a function to map the quantiles of target absent search times to
+# target present search times.
+getQuantiles <- function(pres,abs,probs) {
+  present = quantile(pres,probs)
+  absent = quantile(abs,probs)
+  return(data.frame(probs, present,absent))
+}
+
+E1.quantiles_by_acc <- E1.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100) %>%
+  mutate(cong = target==context,
+         correct=factor(correct, 
+                        levels=c(0,1), 
+                        labels=c('incorrect','correct')))%>%
+  group_by(subj_id,cong, correct) %>%
+  summarise(getQuantiles(
+    RT[resp],
+    RT[!resp],
+    c(0.5,0.75,0.9,0.95)
+  )) %>%
+  pivot_longer(cols=c('present','absent'), names_to='resp', values_to='RT')
+
+E1.quantile_congruency_effects_by_acc <- E1.quantiles_by_acc %>%
+  group_by(subj_id, probs,resp,correct) %>%
+  summarise(diff = RT[cong]-RT[!cong]) %>%
+  pivot_wider(names_from=resp,values_from=diff)
+
+E1.quantile_summary_by_acc <- E1.quantiles_by_acc %>% 
+  group_by(subj_id) %>%
+  mutate(centeredRT = RT-mean(RT))%>%
+  group_by(cong,probs, resp,correct) %>%
+  summarise(mean_RT=mean(RT, na.rm=T),
+            se_RT = se(centeredRT, na.rm=T)) %>%
+  mutate(resp=factor(resp, levels=c('present','absent')),
+         cong=factor(cong,levels=c(TRUE,FALSE), 
+                     labels=c('cong.','incong.')))
+
+E1.quantile_plot_by_acc <- E1.quantile_summary_by_acc %>% 
+  ggplot(aes(x=cong, 
+             y=mean_RT, 
+             # alpha=probs,
+             color=correct,
+             group=interaction(probs,correct))) +
+  geom_line(size=1.3)+
+  geom_errorbar(aes(ymin=mean_RT-se_RT,ymax=mean_RT+se_RT))+
+  facet_grid(~resp)+
+  labs(x='',
+       y='RT')+
+  theme_bw() +
+  theme(legend.pos='na')
+
+ggsave('../docs/figures/E1Quantiles_separate_by_acc.png',E1.quantile_plot_by_acc,width=3.5,height=3.5);
+
+E2.quantiles_by_acc <- E2.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100) %>%
+  mutate(cong = target==context,
+         correct=factor(correct, 
+                        levels=c(0,1), 
+                        labels=c('incorrect','correct')))%>%
+  group_by(subj_id,cong, correct) %>%
+  summarise(getQuantiles(
+    RT[resp],
+    RT[!resp],
+    c(0.5,0.75,0.9,0.95)
+  )) %>%
+  pivot_longer(cols=c('present','absent'), names_to='resp', values_to='RT')
+
+E2.quantile_congruency_effects_by_acc <- E2.quantiles_by_acc %>%
+  group_by(subj_id, probs,resp,correct) %>%
+  summarise(diff = RT[cong]-RT[!cong]) %>%
+  pivot_wider(names_from=resp,values_from=diff)
+
+E2.quantile_summary_by_acc <- E2.quantiles_by_acc %>% 
+  group_by(subj_id) %>%
+  mutate(centeredRT = RT-mean(RT))%>%
+  group_by(cong,probs, resp,correct) %>%
+  summarise(mean_RT=mean(RT, na.rm=T),
+            se_RT = se(centeredRT, na.rm=T)) %>%
+  mutate(resp=factor(resp, levels=c('present','absent')),
+         cong=factor(cong,levels=c(TRUE,FALSE), 
+                     labels=c('cong.','incong.')))
+
+E2.quantile_plot_by_acc <- E2.quantile_summary_by_acc %>% 
+  ggplot(aes(x=cong, 
+             y=mean_RT, 
+             # alpha=probs,
+             color=correct,
+             group=interaction(probs,correct))) +
+  geom_line(size=1.3)+
+  geom_errorbar(aes(ymin=mean_RT-se_RT,ymax=mean_RT+se_RT))+
+  facet_grid(~resp)+
+  labs(x='',
+       y='RT')+
+  theme_bw() +
+  theme(legend.pos='na')
+
+ggsave('../docs/figures/E2Quantiles_separate_by_acc.png',E2.quantile_plot_by_acc,width=3.5,height=3.5);
+
+
+E3.quantiles_by_acc <- E3.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100) %>%
+  group_by(subj_id,hide_proportion,correct) %>%
+  summarise(getQuantiles(
+    RT[resp],
+    RT[!resp],
+    c(0.5,0.75,0.9,0.95)
+  )) %>%
+  pivot_longer(cols=c('present','absent'), names_to='resp', values_to='RT')
+
+E3.quantile_occlusion_effects_by_acc <- E3.quantiles_by_acc %>%
+  group_by(subj_id, probs,resp) %>%
+  summarise(diff = RT[hide_proportion==0.05]-RT[hide_proportion==0.15]) %>%
+  pivot_wider(names_from=resp,values_from=diff)
+
+E3.quantile_summary_by_acc <- E3.quantiles_by_acc %>% 
+  group_by(subj_id) %>%
+  mutate(centeredRT = RT-mean(RT))%>%
+  group_by(hide_proportion,probs, resp,correct) %>%
+  summarise(mean_RT=mean(RT, na.rm=T),
+            se_RT = se(centeredRT, na.rm=T)) %>%
+  mutate(resp=factor(resp, levels=c('present','absent')),
+         hide_proportion=factor(hide_proportion,levels=c(0.05,0.15)),
+         correct = factor(correct,levels=c(0,1), labels=c('correct','incorrect')))
+
+E3.quantile_plot_by_acc <- E3.quantile_summary_by_acc %>% 
+  ggplot(aes(x=hide_proportion, 
+             y=mean_RT, 
+             color=correct,
+             group=interaction(correct,probs))) +
+  geom_line(size=1.3)+
+  geom_errorbar(aes(ymin=mean_RT-se_RT,ymax=mean_RT+se_RT))+
+  facet_grid(~resp)+
+  labs(x='',
+       y='RT')+
+  theme_bw() +
+  theme(legend.pos='na')
+
+ggsave('../docs/figures/E3Quantiles_separat_by_acc.png',
+       E3.quantile_plot_by_acc,width=3.5,height=3.5);
+
+```
