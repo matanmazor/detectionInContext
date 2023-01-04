@@ -1,0 +1,23 @@
+---
+title: "Research log"
+author: "Matan Mazor"
+date: "2023-01-04"
+output: html_document
+bibliography: references.bib
+---
+
+## Rationale for occluded visual search task
+
+In Exp. 3 (occluded detection), subjects did not adjust their target-absent decision times based on expected search difficulty. Although they took longer to detect the target when more of the image was occluded, the proportion of occluded pixels had no effect on the time it took them to infer absence. This finding is surprising, because subjects should know that detecting a target is harder when more of the visual field is occluded, and so they should be more conservative in detecting absence in such circumstances.
+
+One potential explanation is that people never adjust the timing of their decisions about absence based on the expected visibility of the target. For example, @gorea2000 found that subjects fail to simultaneously hold in working memory two separate detection criteria for concurrent detection tasks. Interestingly, in visual search tasks, subjects flexibly adjust their search termination heuristic between trials as a function of set size and the expected salience of the target [@mazor2022]. In visual search, manipulations that affect search time in target-present trials only are relatively rare. Together, it seems that subjects struggle to use metacognitive inference ("I would have seen it by now") in a detection setting, but not in a visual search setting.
+
+One possible explanation is that metacognitive knowledge about attention and perception is not represented in units of time (e.g., "finding the item would take me 2 seconds") but in units of attention allocation steps instead (e.g., "finding the item would take me 20 saccades"). As a result, metacognitive stopping can only occur in tasks where subjects actively allocate attention to different sources.
+
+To test this possibility directly, we can repeat Exp. 3, but this time the target can appear or not in one of several (e.g., 4) different locations. Maybe it can look something like this (just a rough sketch):
+
+```{r design-vs, echo=FALSE, out.width = '40%'}
+knitr::include_graphics("figures/occludedSearchSketch.png")
+```
+
+If we now find that the proportion of occluded pixels does have an effect on search time in target-absent trials, this lends some support to the idea that people are tracking something other than time in making decisions about target absence.
