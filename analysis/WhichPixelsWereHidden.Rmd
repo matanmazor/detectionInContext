@@ -1,0 +1,124 @@
+```{r setup, include = FALSE}
+
+library('groundhog')
+groundhog.library(
+  c(
+    'papaja',
+    'reticulate',
+    'tidyverse',
+    'broom',
+    'cowplot',
+    'MESS', # for AUCs
+    'lsr', # for effect sizes
+    'pwr', # for power calculations
+    'brms', # for mixed effects modeling
+    'BayesFactor',# for Bayesian t test
+    'jsonlite', #parsing data from sort_trial
+    'afex' #for anova
+  ), "2022-12-01"
+)
+r_refs("r-references.bib")
+
+```
+
+```{r load_and_format_data, echo=FALSE, cache=TRUE}
+
+E3.raw_df <- read_csv('../experiments/letters3occluded/version2/data/jatos_resultfiles_batch1/all_data.csv') %>%
+  filter(frame_index==0)%>%
+  mutate(subj_id=PROLIFIC_PID,
+         correct = as.numeric(correct),
+         RT = as.numeric(RT),
+         present=as.numeric(present),
+         resp = response==presence_key,
+         correlation_with_mask=as.numeric(correlation_with_mask)) 
+```
+
+
+```{r exclusion, echo=FALSE, cache=TRUE}
+
+E3.low_accuracy <- E3.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    accuracy = mean(correct)) %>%
+    filter(accuracy<0.5) %>%
+  pull(subj_id)
+
+E3.too_slow <- E3.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    third_quartile_RT = quantile(RT,0.75)) %>%
+    filter(third_quartile_RT>5000) %>%
+  pull(subj_id)
+
+E3.too_fast <- E3.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    first_quartile_RT = quantile(RT,0.25)) %>%
+    filter(first_quartile_RT<100) %>%
+  pull(subj_id)
+
+E3.to_exclude <- c(
+  E3.low_accuracy,
+  E3.too_slow,
+  E3.too_fast
+) %>% unique()
+
+E3.df <- E3.raw_df %>%
+  filter(!(subj_id %in% E3.to_exclude));
+```
+
+```{r plot-occlusion-effects, echo=FALSE, cache=TRUE}
+
+# a function to map the quantiles of target absent search times to
+# target present search times.
+getQuantiles <- function(pres,abs,probs) {
+  present = quantile(pres,probs)
+  absent = quantile(abs,probs)
+  return(data.frame(probs, present,absent))
+}
+
+E3.quantiles.df <- E3.df %>%
+  filter(test_part %in% c('test1','test2')) %>%
+  mutate(hide_pixels = factor(ifelse(
+    correlation_with_mask< quantile(correlation_with_mask,0.3, na.rm=T),
+    'little',
+    ifelse(correlation_with_mask>quantile(correlation_with_mask,0.7, na.rm=T),
+           'many','some')
+  ), levels=c('little','some','many')));
+
+E3.which_pixels.quantiles <- E3.quantiles.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100 & correct) %>%
+  group_by(subj_id,hide_pixels) %>%
+  summarise(getQuantiles(
+    RT[resp],
+    RT[!resp],
+    c(0.05,0.1,0.25,0.5,0.75,0.9,0.95)
+  )) %>%
+  pivot_longer(cols=c('present','absent'), names_to='resp', values_to='RT')
+
+E3.which_pixels.quantile_summary <- E3.which_pixels.quantiles %>% 
+  group_by(subj_id) %>%
+  mutate(centeredRT = RT-mean(RT))%>%
+  group_by(hide_pixels,probs, resp) %>%
+  summarise(mean_RT=mean(RT),
+            se_RT = se(centeredRT)) %>%
+  mutate(resp=factor(resp, levels=c('present','absent')))
+
+E3.which_pixels.quantile_plot <- E3.which_pixels.quantile_summary %>% 
+  ggplot(aes(x=hide_pixels, 
+             y=mean_RT, 
+             color=probs,
+             group=probs)) +
+  geom_line(size=1.3)+
+  geom_errorbar(aes(ymin=mean_RT-se_RT,ymax=mean_RT+se_RT))+
+  facet_grid(~resp)+
+  labs(x='',
+       y='RT')+
+  theme_bw() +
+  theme(legend.pos='na')
+
+ggsave('../docs/figures/E3Quantiles_by_overlap_with_mask.png',E3.which_pixels.quantile_plot,width=3.5,height=3.5);
+```
