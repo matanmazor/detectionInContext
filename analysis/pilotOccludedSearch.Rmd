@@ -32,7 +32,7 @@ pilot.raw_df <- read_csv('../experiments/pilots/occludedSearch/data/jatos_result
 ```
 
 Excluding participants with too many errors
-```{r exclude, echo=FALSE, cache=TRUE}
+```{r exclude, echo=FALSE, cache=TRUE,include=FALSE}
 
 pilot.acc = pilot.raw_df %>%
   filter(test_part %in% c('test1','test2'))%>%
@@ -52,9 +52,9 @@ pilot.df <- pilot.raw_df %>%
 
 Plotting accuracy 
 
-```{r figure1, echo=FALSE, cache=TRUE}
+```{r figure1, echo=FALSE, cache=TRUE, warning=FALSE, include=FALSE}
 
-pilot.df %>%
+pilot.acc_plot <- pilot.df %>%
   group_by(subj_id,hide_proportion,array_width,present) %>%
   summarise(acc=mean(correct)) %>%
   group_by(hide_proportion,array_width,present) %>%
@@ -69,9 +69,9 @@ pilot.df %>%
 
 Plotting RT 
 
-```{r figure2, echo=FALSE, cache=TRUE}
+```{r figure2, echo=FALSE, cache=TRUE,warning=FALSE}
 
-pilot.df %>%
+pilot.RT_plot <- pilot.df %>%
   filter(correct)%>%
   mutate(present=factor(present, levels=c(0,1), labels=c('absent','present')))%>%
   group_by(subj_id,hide_proportion,array_width,present) %>%
@@ -87,12 +87,13 @@ pilot.df %>%
   facet_wrap(~present)+
   labs(x='array width', y='RT')+
   theme_bw()
-  
+
+pilot.RT_plot
 ```
 
 Tests
 
-```{r tests, echo=FALSE, cache=TRUE}
+```{r tests, echo=FALSE, cache=TRUE, inlcude=FALSE, warning=FALSE}
 
 pilot.contrasts <- pilot.df %>%
   filter(correct)%>%
