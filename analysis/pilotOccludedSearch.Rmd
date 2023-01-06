@@ -1,0 +1,106 @@
+```{r setup, include = FALSE}
+
+library('groundhog')
+groundhog.library(
+  c(
+    'papaja',
+    'reticulate',
+    'tidyverse',
+    'broom',
+    'cowplot',
+    'MESS', # for AUCs
+    'lsr', # for effect sizes
+    'pwr', # for power calculations
+    'brms', # for mixed effects modeling
+    'BayesFactor',# for Bayesian t test
+    'jsonlite', #parsing data from sort_trial
+    'afex' #for anova
+  ), "2022-12-01"
+)
+r_refs("r-references.bib")
+
+```
+
+```{r load_and_format_data, echo=FALSE, cache=TRUE}
+pilot.raw_df <- read_csv('../experiments/pilots/occludedSearch/data/jatos_results_batch1.csv') %>%
+  mutate(subj_id=subject_identifier,
+         correct = correct=='true',
+         RT = as.numeric(RT),
+         present=as.numeric(present),
+         resp = response==presence_key)
+
+```
+
+Excluding participants with too many errors
+```{r exclude, echo=FALSE, cache=TRUE}
+
+pilot.acc = pilot.raw_df %>%
+  filter(test_part %in% c('test1','test2'))%>%
+  group_by(subj_id)%>%
+  summarise(acc=mean(correct))
+
+pilot.to_exclude = pilot.acc %>%
+  filter(acc<=0.5) %>%
+  pull(subj_id)
+
+pilot.df <- pilot.raw_df %>%
+  filter(test_part %in% c('test1','test2') &
+           !(subj_id %in% pilot.to_exclude) &
+           RT>100) 
+  
+```
+
+Plotting accuracy 
+
+```{r figure1, echo=FALSE, cache=TRUE}
+
+pilot.df %>%
+  group_by(subj_id,hide_proportion,array_width,present) %>%
+  summarise(acc=mean(correct)) %>%
+  group_by(hide_proportion,array_width,present) %>%
+  summarise(mean_acc=mean(acc),
+            se_acc=se(acc)) %>%
+  ggplot(aes(x=array_width, y=mean_acc, color=hide_proportion, group=hide_proportion)) +
+  geom_line(size=1) +
+  facet_wrap(~present)+
+  labs(x='array width', y='accuracy')
+  
+```
+
+Plotting RT 
+
+```{r figure2, echo=FALSE, cache=TRUE}
+
+pilot.df %>%
+  filter(correct)%>%
+  mutate(present=factor(present, levels=c(0,1), labels=c('absent','present')))%>%
+  group_by(subj_id,hide_proportion,array_width,present) %>%
+  summarise(RT=median(RT)) %>%
+  group_by(subj_id) %>%
+  mutate(centered_RT = RT-mean(RT)) %>%
+  group_by(hide_proportion,array_width,present) %>%
+  summarise(mean_RT=mean(RT),
+            se_RT=se(centered_RT)) %>%
+  ggplot(aes(x=array_width, y=mean_RT, color=hide_proportion, fill=hide_proportion, group=hide_proportion)) +
+  geom_line(size=1) +
+  geom_ribbon(aes(ymax=mean_RT+se_RT,ymin=mean_RT-se_RT),alpha=0.5)+
+  facet_wrap(~present)+
+  labs(x='array width', y='RT')+
+  theme_bw()
+  
+```
+
+Tests
+
+```{r tests, echo=FALSE, cache=TRUE}
+
+pilot.contrasts <- pilot.df %>%
+  filter(correct)%>%
+  group_by(subj_id,present) %>%
+  summarise(
+    array_size_cost = median(RT[array_width==32])-median(RT[array_width==24]),
+    occlusion_cost = median(RT[hide_proportion==0.15])-median(RT[hide_proportion==0.05])
+    )
+
+  
+```
