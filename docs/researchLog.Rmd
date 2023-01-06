@@ -6,7 +6,7 @@ output: github_document
 bibliography: references.bib
 ---
 
-## Rationale for occluded visual search task
+## Rationale for occluded visual search task (2022-01-04)
 
 In Exp. 3 (occluded detection), subjects did not adjust their target-absent decision times based on expected search difficulty. Although they took longer to detect the target when more of the image was occluded, the proportion of occluded pixels had no effect on the time it took them to infer absence. This finding is surprising, because subjects should know that detecting a target is harder when more of the visual field is occluded, and so they should be more conservative in detecting absence in such circumstances.
 
@@ -21,3 +21,7 @@ knitr::include_graphics("figures/occludedSearchSketch.png")
 ```
 
 If we now find that the proportion of occluded pixels does have an effect on search time in target-absent trials, this lends some support to the idea that people are tracking something other than time in making decisions about target absence.
+
+## An issue with the experiment code (2022-01-06)
+
+In all versions of the experiment I ran so far, there were two jatos.onLoad commands, and cryptographic pre-registration only happened in the second one. I ran some tests and all subjects were run with the correct version of the onLoad function, because we have 100 unique subject sums in Exp. 1, 323 in Exp. 2, and 253 in Exp. 3: the same as the number of participants. I also checked and the setting of the randomization seed affects the contents of the experiment, even if this setting only appears in the second function. This bug, which did not affect the data, will be fixed in all following experiments.
