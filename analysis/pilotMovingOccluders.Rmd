@@ -1,0 +1,186 @@
+```{r setup, include = FALSE}
+
+library('groundhog')
+groundhog.library(
+  c(
+    'papaja',
+    'reticulate',
+    'tidyverse',
+    'broom',
+    'cowplot',
+    'MESS', # for AUCs
+    'lsr', # for effect sizes
+    'pwr', # for power calculations
+    'brms', # for mixed effects modeling
+    'BayesFactor',# for Bayesian t test
+    'jsonlite', #parsing data from sort_trial
+    'afex' #for anova
+  ), "2022-12-01"
+)
+r_refs("r-references.bib")
+
+```
+
+```{r load_and_format_data, echo=FALSE, cache=TRUE}
+pilot.raw_df <- read_csv('../experiments/pilots/movingOccluders/data/jatos_resultfiles_batch1/all_data.csv') %>%
+  filter(frame_index==0)%>%
+  mutate(subj_id=subject_identifier,
+         correct = as.numeric(correct),
+         RT = as.numeric(RT),
+         present=as.numeric(present),
+         resp = response==presence_key) 
+
+```
+
+Excluding participants with too many errors
+
+```{r exclude, echo=FALSE, cache=TRUE,include=FALSE}
+
+pilot.acc = pilot.raw_df %>%
+  filter(test_part %in% c('test1','test2'))%>%
+  group_by(subj_id)%>%
+  summarise(acc=mean(correct))
+
+pilot.to_exclude = pilot.acc %>%
+  filter(acc<=0.5) %>%
+  pull(subj_id)
+
+pilot.df <- pilot.raw_df %>%
+  filter(test_part %in% c('test1','test2') &
+           !(subj_id %in% pilot.to_exclude) &
+           RT>100) 
+  
+```
+
+Plotting accuracy
+
+```{r figure1, echo=FALSE, cache=TRUE, warning=FALSE, include=FALSE}
+
+pilot.acc_plot <- pilot.df %>%
+  group_by(subj_id,hide_proportion,present) %>%
+  summarise(acc=mean(correct)) %>%
+  group_by(hide_proportion,present) %>%
+  summarise(mean_acc=mean(acc),
+            se_acc=se(acc)) %>%
+  ggplot(aes(x=hide_proportion, y=mean_acc)) +
+  geom_line(size=1) +
+  facet_wrap(~present)+
+  labs(x='array width', y='accuracy')
+  
+```
+
+Plotting RT
+
+```{r figure2, echo=FALSE, cache=TRUE,warning=FALSE}
+
+pilot.RT_plot <- pilot.df %>%
+  filter(correct==1)%>%
+  mutate(present=factor(present, levels=c(0,1), labels=c('absent','present')))%>%
+  group_by(subj_id,hide_proportion,present) %>%
+  summarise(RT=median(RT)) %>%
+  group_by(subj_id) %>%
+  mutate(centered_RT = RT-mean(RT)) %>%
+  group_by(hide_proportion,present) %>%
+  summarise(mean_RT=mean(RT),
+            se_RT=se(centered_RT)) %>%
+  ggplot(aes(x=hide_proportion, y=mean_RT)) +
+  geom_line(size=1) +
+  geom_ribbon(aes(ymax=mean_RT+se_RT,ymin=mean_RT-se_RT),alpha=0.5)+
+  facet_wrap(~present)+
+  labs(x='array width', y='RT')+
+  theme_bw()
+
+pilot.RT_plot
+```
+
+Tests
+
+```{r tests, echo=FALSE, cache=TRUE, inlcude=FALSE, warning=FALSE}
+
+pilot.contrasts <- pilot.df %>%
+  filter(correct)%>%
+  group_by(subj_id,present) %>%
+  summarise(
+    array_size_cost = median(RT[array_width==32])-median(RT[array_width==24]),
+    occlusion_cost = median(RT[hide_proportion==0.15])-median(RT[hide_proportion==0.05])
+    )
+
+  
+```
+
+## Second pilot
+
+In this pilot experiment, the occluders appear for 500 ms *before* the target. The two levels are 5% and 25% instead of 5% and 15%. I also added a question at the end, asking people if having more occluders made finding the target more difficult.
+
+
+```{r load_and_format_data_p2, echo=FALSE, cache=TRUE}
+pilot2.raw_df <- read_csv('../experiments/pilots/movingOccluders/data/jatos_resultfiles_batch2/all_data.csv') %>%
+  filter(frame_index==0)%>%
+  mutate(subj_id=subject_identifier,
+         correct = as.numeric(correct),
+         RT = as.numeric(RT),
+         present=as.numeric(present),
+         resp = response==presence_key) 
+
+```
+
+Excluding participants with too many errors
+
+```{r exclude_p2, echo=FALSE, cache=TRUE,include=FALSE}
+
+pilot2.acc = pilot2.raw_df %>%
+  filter(test_part %in% c('test1','test2'))%>%
+  group_by(subj_id)%>%
+  summarise(acc=mean(correct))
+
+pilot2.to_exclude = pilot2.acc %>%
+  filter(acc<=0.5) %>%
+  pull(subj_id)
+
+pilot2.df <- pilot2.raw_df %>%
+  filter(test_part %in% c('test1','test2') &
+           !(subj_id %in% pilot2.to_exclude) &
+           RT>600) 
+  
+```
+
+Plotting accuracy
+
+```{r figure1, echo=FALSE, cache=TRUE, warning=FALSE, include=FALSE}
+
+pilot2.acc_plot <- pilot2.df %>%
+  group_by(subj_id,hide_proportion,present) %>%
+  summarise(acc=mean(correct)) %>%
+  group_by(hide_proportion,present) %>%
+  summarise(mean_acc=mean(acc),
+            se_acc=se(acc)) %>%
+  ggplot(aes(x=hide_proportion, y=mean_acc)) +
+  geom_line(size=1) +
+  facet_wrap(~present)+
+  labs(x='array width', y='accuracy')
+  
+```
+
+Plotting RT
+
+```{r figure2, echo=FALSE, cache=TRUE,warning=FALSE}
+
+pilot2.RT_plot <- pilot2.df %>%
+  filter(correct==0)%>%
+  mutate(present=factor(present, levels=c(0,1), labels=c('absent','present')))%>%
+  group_by(subj_id,hide_proportion,present) %>%
+  summarise(RT=median(RT)) %>%
+  group_by(subj_id) %>%
+  mutate(centered_RT = RT-mean(RT)) %>%
+  group_by(hide_proportion,present) %>%
+  summarise(mean_RT=mean(RT),
+            se_RT=se(centered_RT)) %>%
+  ggplot(aes(x=hide_proportion, y=mean_RT)) +
+  geom_line(size=1) +
+  geom_ribbon(aes(ymax=mean_RT+se_RT,ymin=mean_RT-se_RT),alpha=0.5)+
+  facet_wrap(~present)+
+  labs(x='array width', y='RT')+
+  theme_bw()
+
+pilot2.RT_plot
+```
