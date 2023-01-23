@@ -57,6 +57,50 @@ randomization seed affects the contents of the experiment, even if this
 setting only appears in the second function. This bug, which did not
 affect the data, will be fixed in all following experiments.
 
+## Results of the pilot experiment (2022-01-06)
+
+I ran 30 participants on a version of the occlusion task where the
+target letter can appear anywhere within an array. I manipulated the
+size of the array (24x24 or 32x32 pixels) and the proportion of occluded
+pixels (5% or 15%).
+
+Even within the context of visual search, there is no effect of the
+proportion of occluded pixels on “target-absent” response times. Oddly,
+the effect in target-present response times does not interact with array
+size, and the effect of array size on target-absent response times is
+smaller, instead of larger, than its effect in target-absent response
+times.
+
+Maybe a model that can explain these results is:
+
+While t\<noisy timer: - sample a random location - run a drift diffusion
+model until the target is found or until reaching the time limit per
+fixation. - if target is found, respond yes - otherwise, repeat.
+
+Say no.
+
+This explains why there should be an effect of occlusion in target
+presence (effect on drift rate) but not in target absence (no effect on
+drift rate for absence), why there is no interaction between the effects
+of occlusion and array size in target present (the effect of occlusion
+is only via the last fixated location).
+
+This model fails to explain, however, the effect of array size on search
+time, and the fact that this effect seems weaker rather than stronger in
+target-absent trials.
+
+## Results of the pilot experiment - moving occluders (2022-01-20)
+
+I ran a pilot experiment where the occluders move on the display, with
+the purpose of revealing a setting where target-present and
+target-absent trials behave similarly (that is, both show a cost for
+occluding more of the screen). With 30 participants, there is no
+significant effect for either target-present or target-absent response
+times (analysis/movingOccluders.Rmd). Instead, there is a strong effect
+on decision accuracy, where participants miss more targets when more of
+the display is occluded. Seems like an effect of both d-prime and
+criterion.
+
 <div id="refs" class="references csl-bib-body hanging-indent">
 
 <div id="ref-gorea2000" class="csl-entry">
