@@ -45,3 +45,11 @@ This model fails to explain, however, the effect of array size on search time, a
 ## Results of the pilot experiment - moving occluders (2022-01-20)
 
 I ran a pilot experiment where the occluders move on the display, with the purpose of revealing a setting where target-present and target-absent trials behave similarly (that is, both show a cost for occluding more of the screen). With 30 participants, there is no significant effect for either target-present or target-absent response times (analysis/movingOccluders.Rmd). Instead, there is a strong effect on decision accuracy, where participants miss more targets when more of the display is occluded. Seems like an effect of both d-prime and criterion.
+
+## Fewer unique accuracy values in Exp. 3 (2022-02-03)
+
+I was surprised that there were fewer unique accuracy values per condition and target presence in Exp. 3 than in Exp. 2. The reason is that in Exp. 1 and 2 different subjects had different numbers of target-present congruent and incongruent trials, because they were randomized independently. In Exp. 3 they were randomized together.
+
+## New pilot experiment - Row occluders + confidence (2022-03-09)
+
+I launched a new version of the experiment, where entire rows are occluded, and subjects rate their confidence in the second block.
