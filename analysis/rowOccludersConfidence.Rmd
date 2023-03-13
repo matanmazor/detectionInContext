@@ -1,0 +1,337 @@
+```{r setup, include = FALSE}
+
+library('groundhog')
+groundhog.library(
+  c(
+    'papaja',
+    'reticulate',
+    'tidyverse',
+    'broom',
+    'cowplot',
+    'MESS', # for AUCs
+    'lsr', # for effect sizes
+    'pwr', # for power calculations
+    'brms', # for mixed effects modeling
+    'BayesFactor',# for Bayesian t test
+    'jsonlite', #parsing data from sort_trial
+    'afex' #for anova
+  ), "2022-12-01"
+)
+r_refs("r-references.bib")
+
+```
+
+```{r load_and_format_data, echo=FALSE, cache=TRUE}
+E4.raw_df <- read_csv('../experiments/letters4occludedRows/data/jatos_resultfiles_batch1/all_data.csv') %>%
+  filter(frame_index==0)%>%
+  mutate(subj_id=PROLIFIC_PID,
+         correct = as.numeric(correct),
+         RT = as.numeric(RT),
+         present=as.numeric(present),
+         resp = response==presence_key) 
+
+```
+
+Excluding participants with too many errors
+
+```{r exclude, echo=FALSE, cache=TRUE,include=FALSE}
+
+E4.low_accuracy <- E4.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    accuracy = mean(correct)) %>%
+    filter(accuracy<0.5) %>%
+  pull(subj_id)
+
+E4.too_slow <- E4.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    third_quartile_RT = quantile(RT,0.75)) %>%
+    filter(third_quartile_RT>5000) %>%
+  pull(subj_id)
+
+E4.too_fast <- E4.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    first_quartile_RT = quantile(RT,0.25)) %>%
+    filter(first_quartile_RT<100) %>%
+  pull(subj_id)
+
+E4.to_exclude <- c(
+  E4.low_accuracy,
+  E4.too_slow,
+  E4.too_fast
+) %>% unique()
+
+E4.df <- E4.raw_df %>%
+  filter(!(subj_id %in% E4.to_exclude));
+  
+```
+
+```{r descriptives, echo=FALSE, cache=TRUE}
+
+
+E4.overall_descriptives <- E4.df %>%
+    filter(test_part=='test1' | test_part=='test2') %>%
+    group_by(subj_id) %>%
+    summarise(accuracy=mean(correct),
+            resp_bias=mean(resp),
+            slow_RT = quantile(RT,0.75)>5000,
+            RT=median(RT),
+            hit_rate = (sum(correct & present)+0.5)/(sum(present)+1),
+            fa_rate = (sum(!correct & !present)+0.5)/(sum(!present)+1),
+            d = qnorm(hit_rate)-qnorm(fa_rate),
+            c = -0.5*(qnorm(hit_rate)+qnorm(fa_rate)));
+```
+
+`r E4.raw_df%>%pull(subj_id)%>%unique()%>%length()` participants completed the task. Mean accuracy in the main block experiment was `r E4.overall_descriptives%>%pull(accuracy)%>%mean()` (SD=`r E4.overall_descriptives%>%pull(accuracy)%>%sd()`). The mean median response time was `r printnum(E4.overall_descriptives%>%pull(RT)%>%mean()/1000)` seconds (SD=`r printnum(E4.overall_descriptives%>%pull(RT)%>%sd()/1000)`). No participants were excluded based on our pre-registered accuracy lower bound of 50%, and based on our pre-registered criterion for making hasty responses (RT\<100 ms in more than 25% of the trials). `r E4.too_slow%>%length()` participants were excluded for responding too slowly.
+
+
+```{r H1, echo=FALSE, cache=TRUE}
+
+E4.RT_by_resp <- E4.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100) %>%
+  group_by(subj_id,resp) %>%
+  summarise(RT=median(RT))%>%
+  spread(resp,RT,sep='')%>%
+  mutate(diff=respTRUE-respFALSE)
+```
+
+*Hypothesis 1 (PRESENCE/ABSENCE RESPONSE TIME)*: As expected, response times were significantly shorter in decisions about presence compared to absence (`r printnum(E4.RT_by_resp%>%pull(respTRUE)%>%mean()/1000)` vs `r printnum(E4.RT_by_resp%>%pull(respFALSE)%>%mean()/1000)` seconds; `r apa_print(E4.RT_by_resp%>%pull(diff)%>%t.test())$statistic`).
+
+
+```{r H2, echo=FALSE, cache=TRUE}
+
+E4.RT_by_occlusion_in_presence <- E4.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100 & resp) %>%
+  group_by(subj_id,hide_proportion) %>%
+  summarise(RT=median(RT))%>%
+  spread(hide_proportion,RT,sep='')%>%
+  mutate(diff=hide_proportion0.1-hide_proportion0.35);
+
+E4.RT_by_occlusion_in_presence_correct_only <- E4.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100 & resp & correct) %>%
+  group_by(subj_id,hide_proportion) %>%
+  summarise(RT=median(RT))%>%
+  spread(hide_proportion,RT,sep='')%>%
+  mutate(diff=hide_proportion0.1-hide_proportion0.35);
+```
+
+*Hypothesis 2 (OCCLUSION RT EFFECT IN PRESENCE)*: Target-present decisions were significantly slower when more of the target was occluded behind black rows (`r printnum(E4.RT_by_occlusion_in_presence_correct_only$hide_proportion0.35%>%mean()/1000)` vs `r printnum(E4.RT_by_occlusion_in_presence_correct_only$hide_proportion0.1%>%mean()/1000)` seconds;  `r apa_print(E4.RT_by_occlusion_in_presence_correct_only%>%pull(diff)%>%t.test())$statistic`).
+
+```{r H3, echo=FALSE, cache=TRUE}
+
+E4.RT_by_occlusion_in_absence <- E4.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100 & !resp) %>%
+  group_by(subj_id,hide_proportion) %>%
+  summarise(RT=median(RT))%>%
+  spread(hide_proportion,RT,sep='')%>%
+  mutate(diff=hide_proportion0.1-hide_proportion0.35);
+
+E4.RT_by_occlusion_in_absence_correct_only <- E4.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100 & !resp & correct) %>%
+  group_by(subj_id,hide_proportion) %>%
+  summarise(RT=median(RT))%>%
+  spread(hide_proportion,RT,sep='')%>%
+  mutate(diff=hide_proportion0.1-hide_proportion0.35);
+```
+
+*Hypothesis 3 (OCCLUSION RT EFFECT IN ABSENCE)*: Target-present decision times were unaffected by the occlusion manipulation (`r printnum(E4.RT_by_occlusion_in_absence_correct_only$hide_proportion0.35%>%mean()/1000)` vs `r printnum(E4.RT_by_occlusion_in_absence_correct_only$hide_proportion0.1%>%mean()/1000)` seconds for the 2 and 6 rows conditions, respectively;  `r apa_print(E4.RT_by_occlusion_in_absence_correct_only%>%pull(diff)%>%t.test())$statistic`).
+
+
+```{r H4, echo=FALSE, cache=TRUE}
+
+E4.RT_by_occlusion_and_response <- merge(
+  E4.RT_by_occlusion_in_presence,
+  E4.RT_by_occlusion_in_absence,
+  by= 'subj_id',
+  suffixes = c('presence','absence')) %>%
+  mutate(interaction = diffpresence-diffabsence);
+
+E4.RT_by_occlusion_and_response_correct_only <- merge(
+  E4.RT_by_occlusion_in_presence_correct_only,
+  E4.RT_by_occlusion_in_absence_correct_only,
+  by= 'subj_id',
+  suffixes = c('presence','absence')) %>%
+  mutate(interaction = diffpresence-diffabsence);
+```
+
+*Hypothesis 4 (OCCLUSION RESPONSE INTERACTION ON RT)*: The effect of occlusion on response time was stronger in decisions about target presence, compared to decisions about target absence (`r apa_print(E4.RT_by_occlusion_and_response_correct_only%>%pull(interaction)%>%t.test())$statistic`).
+
+```{r quantiles, echo=FALSE, cache=TRUE}
+
+
+# a function to map the quantiles of target absent search times to
+# target present search times.
+getQuantiles <- function(pres,abs,probs) {
+  present = quantile(pres,probs)
+  absent = quantile(abs,probs)
+  return(data.frame(probs, present,absent))
+}
+
+
+E4.quantiles <- E4.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100 & correct) %>%
+  group_by(subj_id,hide_proportion) %>%
+  summarise(getQuantiles(
+    RT[resp],
+    RT[!resp],
+    c(0.5,0.75,0.9,0.95)
+  )) %>%
+  pivot_longer(cols=c('present','absent'), names_to='resp', values_to='RT')
+
+E4.quantile_occlusion_effects <- E4.quantiles %>%
+  group_by(subj_id, probs,resp) %>%
+  spread(hide_proportion, RT, sep='') %>%
+  mutate(diff=hide_proportion0.1-hide_proportion0.35) %>%
+  dplyr::select(subj_id,probs,diff)%>%
+  pivot_wider(names_from=resp,values_from=diff)
+
+E4.quantile_summary <- E4.quantiles %>% 
+  group_by(subj_id) %>%
+  mutate(centeredRT = RT-mean(RT))%>%
+  group_by(hide_proportion,probs, resp) %>%
+  summarise(mean_RT=mean(RT),
+            se_RT = se(centeredRT)) %>%
+  mutate(resp=factor(resp, levels=c('present','absent')),
+         hide_proportion=factor(hide_proportion,levels=c(0.1,0.35)))
+
+E4.quantile_plot <- E4.quantile_summary %>% 
+  ggplot(aes(x=hide_proportion, 
+             y=mean_RT, 
+             color=probs,
+             group=probs)) +
+  geom_line(size=1.3)+
+  geom_errorbar(aes(ymin=mean_RT-se_RT,ymax=mean_RT+se_RT))+
+  facet_grid(~resp)+
+  labs(x='',
+       y='RT')+
+  theme_bw() +
+  theme(legend.pos='na')
+
+ggsave('figures/E4Quantiles_separate.png',E4.quantile_plot,width=3.5,height=3.5);
+
+```
+
+```{r SDT, echo=FALSE, cache=TRUE}
+
+E4.descriptives_by_occlusion<- E4.df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  mutate(resp = response==presence_key)%>%
+  group_by(subj_id,hide_proportion) %>%
+  summarise(accuracy=mean(correct),
+            resp_bias=mean(resp),
+            RT=median(RT),
+            hit_rate = (sum(correct & present)+0.5)/(sum(present)+1),
+            fa_rate = (sum(!correct & !present)+0.5)/(sum(!present)+1),
+            d = qnorm(hit_rate)-qnorm(fa_rate),
+            c = -0.5*(qnorm(hit_rate)+qnorm(fa_rate)))
+
+E4.dprime <- E4.descriptives_by_occlusion%>%
+  dplyr::select(subj_id,hide_proportion,d)%>%
+  spread(hide_proportion, d,sep='')%>%
+  mutate(diff=hide_proportion0.1-hide_proportion0.35)
+
+E4.criterion <- E4.descriptives_by_occlusion%>%
+  dplyr::select(subj_id,hide_proportion,c)%>%
+  spread(hide_proportion, c,sep='')%>%
+  mutate(diff=hide_proportion0.1-hide_proportion0.35)
+
+E4.hit_rate <- E4.descriptives_by_occlusion%>%
+  dplyr::select(subj_id,hide_proportion,hit_rate)%>%
+  spread(hide_proportion, hit_rate,sep='')%>%
+  mutate(diff=hide_proportion0.1-hide_proportion0.35)
+
+E4.fa_rate <- E4.descriptives_by_occlusion%>%
+  dplyr::select(subj_id,hide_proportion,fa_rate)%>%
+  spread(hide_proportion, fa_rate,sep='')%>%
+  mutate(diff=hide_proportion0.1-hide_proportion0.35)
+```
+
+*Hypothesis 5 (SENSITIVITY)*: Signal detection sensitivity was significantly impacted by pixel occlusion (`r apa_print(E4.dprime$diff%>%t.test())$statistic`), with d'=`r printnum(E4.dprime$hide_proportion0.1%>%mean())` (SD=`r printnum(E4.dprime$hide_proportion0.1%>%sd())`) when two rows were occluded, and d'=`r printnum(E4.dprime$hide_proportion0.35%>%mean())` (SD=`r printnum(E4.dprime$hide_proportion0.35%>%sd())`) when six rows were occluded. This effect was driven by a difference in hit rate (`r apa_print(E4.hit_rate$diff%>%t.test())$statistic`), and an effect on the false-positive rate (`r apa_print(E4.fa_rate$diff%>%t.test())$statistic`).
+
+*Hypothesis 6 (CRITERION)*: Signal detection criterion was conservative overall, and more conservative when more of the display was occluded (`r apa_print(E4.criterion$diff%>%t.test())$statistic`), with c=`r printnum(E4.criterion$hide_proportion0.1%>%mean())` (SD=`r printnum(E4.criterion$hide_proportion0.1%>%sd())`) when two rows were occluded, and `r printnum(E4.criterion$hide_proportion0.35%>%mean())` (SD=`r printnum(E4.criterion$hide_proportion0.35%>%sd())`) when six rows were occluded. 
+
+```{r H7, echo=FALSE, cache=TRUE}
+
+E4.confidence_by_resp <- E4.df %>%
+  filter((test_part=='test1' | test_part=='test2')) %>%
+  group_by(subj_id,resp) %>%
+  summarise(confidence=mean(confidence, na.rm=T))%>%
+  spread(resp,confidence,sep='')%>%
+  mutate(diff=respTRUE-respFALSE)
+
+E4.confidence_by_resp_correct_only <- E4.df %>%
+  filter((test_part=='test1' | test_part=='test2') & correct) %>%
+  group_by(subj_id,resp) %>%
+  summarise(confidence=mean(confidence, na.rm=T))%>%
+  spread(resp,confidence,sep='')%>%
+  mutate(diff=respTRUE-respFALSE)
+```
+
+*Hypothesis 7 (PRESENCE/ABSENCE CONFIDENCE)*: As expected, confidence was significantly higher in decisions about presence compared to absence (`r printnum(E4.confidence_by_resp_correct_only%>%pull(respTRUE)%>%mean())` vs `r printnum(E4.confidence_by_resp_correct_only%>%pull(respFALSE)%>%mean())` on a 0-1 scale; `r apa_print(E4.confidence_by_resp_correct_only%>%pull(diff)%>%t.test())$statistic`).
+
+```{r H8, echo=FALSE, cache=TRUE}
+
+E4.confidence_by_occlusion_in_presence <- E4.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100 & resp) %>%
+  group_by(subj_id,hide_proportion) %>%
+  summarise(confidence=mean(confidence, na.rm=T))%>%
+  spread(hide_proportion,confidence,sep='')%>%
+  mutate(diff=hide_proportion0.1-hide_proportion0.35);
+
+E4.confidence_by_occlusion_in_presence_correct_only <- E4.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100 & resp & correct) %>%
+  group_by(subj_id,hide_proportion) %>%
+  summarise(confidence=mean(confidence, na.rm=T))%>%
+  spread(hide_proportion,confidence,sep='')%>%
+  mutate(diff=hide_proportion0.1-hide_proportion0.35);
+
+```
+
+*Hypothesis 8 (OCCLUSION CONFIDENCE EFFECT IN PRESENCE)*: Confidence in decisions about presence was lower when more of the display was occluded (`r printnum(E4.confidence_by_occlusion_in_presence_correct_only$hide_proportion0.35%>%mean())` vs. `r printnum(E4.confidence_by_occlusion_in_presence_correct_only$hide_proportion0.1%>%mean())`; `r apa_print(E4.confidence_by_occlusion_in_presence_correct_only$diff%>%t.test())$statistic`). 
+
+
+```{r H9, echo=FALSE, cache=TRUE}
+
+E4.confidence_by_occlusion_in_absence <- E4.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100 & !resp) %>%
+  group_by(subj_id,hide_proportion) %>%
+  summarise(confidence=mean(confidence, na.rm=T))%>%
+  spread(hide_proportion,confidence,sep='')%>%
+  mutate(diff=hide_proportion0.1-hide_proportion0.35);
+
+E4.confidence_by_occlusion_in_absence_correct_only <- E4.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100 & !resp & correct) %>%
+  group_by(subj_id,hide_proportion) %>%
+  summarise(confidence=mean(confidence, na.rm=T))%>%
+  spread(hide_proportion,confidence,sep='')%>%
+  mutate(diff=hide_proportion0.1-hide_proportion0.35);
+
+```
+
+*Hypothesis 9 (OCCLUSION CONFIDENCE EFFECT IN ABSENCE)*: Confidence in decisions about presence was also lower when more of the display was occluded (`r printnum(E4.confidence_by_occlusion_in_absence_correct_only$hide_proportion0.35%>%mean())` vs. `r printnum(E4.confidence_by_occlusion_in_absence_correct_only$hide_proportion0.1%>%mean())`; `r apa_print(E4.confidence_by_occlusion_in_absence_correct_only$diff%>%t.test())$statistic`). 
+
+```{r H10, echo=FALSE, cache=TRUE}
+
+E4.confidence_by_occlusion_and_response <- merge(
+  E4.confidence_by_occlusion_in_presence,
+  E4.confidence_by_occlusion_in_absence,
+  by= 'subj_id',
+  suffixes = c('presence','absence')) %>%
+  mutate(interaction = diffpresence-diffabsence);
+
+E4.confidence_by_occlusion_and_response_correct_only <- merge(
+  E4.confidence_by_occlusion_in_presence_correct_only,
+  E4.confidence_by_occlusion_in_absence_correct_only,
+  by= 'subj_id',
+  suffixes = c('presence','absence')) %>%
+  mutate(interaction = diffpresence-diffabsence);
+```
+
+*Hypothesis 10 (OCCLUSION RESPONSE INTERACTION ON CONFIDENCE)*: The effect of occlusion on confidence was not significantly different in decisions about target presence and absence (`r apa_print(E4.confidence_by_occlusion_and_response_correct_only%>%pull(interaction)%>%t.test())$statistic`).
+
+
