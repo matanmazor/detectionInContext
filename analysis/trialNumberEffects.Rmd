@@ -1,0 +1,384 @@
+---
+title: "Trial number effects"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include = FALSE}
+
+library('groundhog')
+groundhog.library(
+  c(
+    'papaja',
+    'reticulate',
+    'tidyverse',
+    'broom',
+    'cowplot',
+    'MESS', # for AUCs
+    'lsr', # for effect sizes
+    'pwr', # for power calculations
+    'brms', # for mixed effects modeling
+    'BayesFactor',# for Bayesian t test
+    'jsonlite', #parsing data from sort_trial
+    'afex' #for anova
+  ), "2022-12-01"
+)
+r_refs("r-references.bib")
+
+```
+
+```{r load_and_format_data, echo=FALSE, cache=TRUE}
+E1.raw_df <- read_csv('../experiments/letters/data/jatos_resultfiles_batch1/all_data.csv') %>%
+  filter(frame_index==0)%>%
+  mutate(subj_id=PROLIFIC_PID,
+         correct = as.numeric(correct),
+         RT = as.numeric(RT),
+         present=as.numeric(present),
+         resp = response==presence_key,
+         context=ifelse(context_string=='M SK','A',context))
+
+E2.raw_df <- read_csv('../experiments/letters2/data/jatos_resultfiles_batch1/all_data.csv') %>%
+  filter(frame_index==0)%>%
+  mutate(subj_id=PROLIFIC_PID,
+         correct = as.numeric(correct),
+         RT = as.numeric(RT),
+         present=as.numeric(present),
+         resp = response==presence_key,
+         context=ifelse(context_string=='M SK','A',context)) #I accidentally coded this as S
+
+E3.raw_df <- read_csv('../experiments/letters3occluded/version2/data/jatos_resultfiles_batch1/all_data.csv') %>%
+  filter(frame_index==0)%>%
+  mutate(subj_id=PROLIFIC_PID,
+         correct = as.numeric(correct),
+         RT = as.numeric(RT),
+         present=as.numeric(present),
+         resp = response==presence_key) 
+
+E4.raw_df <- read_csv('../experiments/letters4occludedRows/data/jatos_resultfiles_batch1/all_data.csv') %>%
+  filter(frame_index==0)%>%
+  mutate(subj_id=PROLIFIC_PID,
+         correct = as.numeric(correct),
+         RT = as.numeric(RT),
+         present=as.numeric(present),
+         resp = response==presence_key) 
+```
+
+```{r exclusion, echo=FALSE, cache=TRUE}
+
+E1.low_accuracy <- E1.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    accuracy = mean(correct)) %>%
+    filter(accuracy<0.5) %>%
+  pull(subj_id)
+
+E1.too_slow <- E1.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id, test_part) %>%
+  summarise(
+    third_quartile_RT = quantile(RT,0.75)) %>%
+    filter(third_quartile_RT>5000) %>%
+  pull(subj_id)
+
+E1.too_fast <- E1.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id, test_part) %>%
+  summarise(
+    first_quartile_RT = quantile(RT,0.25)) %>%
+    filter(first_quartile_RT<100) %>%
+  pull(subj_id)
+
+E1.to_exclude <- c(
+  E1.low_accuracy,
+  E1.too_slow,
+  E1.too_fast
+) %>% unique()
+
+
+E1.df <- E1.raw_df %>%
+  filter(!(subj_id %in% E1.to_exclude));
+
+E2.low_accuracy <- E2.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    accuracy = mean(correct)) %>%
+    filter(accuracy<0.5) %>%
+  pull(subj_id)
+
+E2.too_slow <- E2.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    third_quartile_RT = quantile(RT,0.75)) %>%
+    filter(third_quartile_RT>5000) %>%
+  pull(subj_id)
+
+E2.too_fast <- E2.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    first_quartile_RT = quantile(RT,0.25)) %>%
+    filter(first_quartile_RT<100) %>%
+  pull(subj_id)
+
+E2.to_exclude <- c(
+  E2.low_accuracy,
+  E2.too_slow,
+  E2.too_fast
+) %>% unique()
+
+E2.df <- E2.raw_df %>%
+  filter(!(subj_id %in% E2.to_exclude));
+
+E3.low_accuracy <- E3.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    accuracy = mean(correct)) %>%
+    filter(accuracy<0.5) %>%
+  pull(subj_id)
+
+E3.too_slow <- E3.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    third_quartile_RT = quantile(RT,0.75)) %>%
+    filter(third_quartile_RT>5000) %>%
+  pull(subj_id)
+
+E3.too_fast <- E3.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    first_quartile_RT = quantile(RT,0.25)) %>%
+    filter(first_quartile_RT<100) %>%
+  pull(subj_id)
+
+E3.to_exclude <- c(
+  E3.low_accuracy,
+  E3.too_slow,
+  E3.too_fast
+) %>% unique()
+
+E3.df <- E3.raw_df %>%
+  filter(!(subj_id %in% E3.to_exclude));
+
+
+E4.low_accuracy <- E4.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    accuracy = mean(correct)) %>%
+    filter(accuracy<0.5) %>%
+  pull(subj_id)
+
+E4.too_slow <- E4.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    third_quartile_RT = quantile(RT,0.75)) %>%
+    filter(third_quartile_RT>5000) %>%
+  pull(subj_id)
+
+E4.too_fast <- E4.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    first_quartile_RT = quantile(RT,0.25)) %>%
+    filter(first_quartile_RT<100) %>%
+  pull(subj_id)
+
+E4.to_exclude <- c(
+  E4.low_accuracy,
+  E4.too_slow,
+  E4.too_fast
+) %>% unique()
+
+E4.df <- E4.raw_df %>%
+  filter(!(subj_id %in% E4.to_exclude));
+```
+
+```{r prepare_dfs, echo=FALSE, cache=TRUE}
+
+E1.trial_number_df <- E1.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100) %>%
+  dplyr::select(subj_id,present,resp,RT) %>%
+  group_by(subj_id) %>%
+  mutate(i=seq(length(subj_id)),
+         correct = ifelse(present==1, resp, !resp),
+         exp=1)
+
+E2.trial_number_df <- E2.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100) %>%
+  dplyr::select(subj_id,present,resp,RT) %>%
+  group_by(subj_id) %>%
+  mutate(i=seq(length(subj_id)),
+         correct = ifelse(present==1, resp, !resp),
+         exp=2)
+
+E3.trial_number_df <- E3.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100) %>%
+  dplyr::select(subj_id,present,resp,RT) %>%
+  group_by(subj_id) %>%
+  mutate(i=seq(length(subj_id)),
+         correct = ifelse(present==1, resp, !resp),
+         exp=3)
+
+E4.trial_number_df <- E4.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100) %>%
+  dplyr::select(subj_id,present,resp,RT) %>%
+  group_by(subj_id) %>%
+  mutate(i=seq(length(subj_id)),
+         correct = ifelse(present==1, resp, !resp), 
+         exp = 4)
+
+trial_number_df <- E1.trial_number_df %>%
+  bind_rows(E2.trial_number_df) %>%
+  bind_rows(E3.trial_number_df) %>%
+  bind_rows(E4.trial_number_df)
+
+```
+
+```{r plot_speed, echo=FALSE, cache=TRUE}
+
+trial_number_df %>%
+  group_by(exp,i, resp) %>%
+  summarise(se = se(RT),
+            RT=median(RT)) %>%
+  ggplot(aes(x=i, y=RT, color=resp)) +
+  geom_line() +
+  geom_ribbon(aes(ymin=RT-se, ymax=RT+se, fill=resp), alpha=0.5) +
+  facet_wrap(~exp)
+
+```
+
+```{r plot_accuracy, echo=FALSE, cache=TRUE}
+
+trial_number_df %>%
+  group_by(exp,i, present) %>%
+  summarise(acc=mean(correct)) %>%
+  ggplot(aes(x=i, y=acc, color=as.factor(present))) +
+  geom_line() +
+  facet_wrap(~exp)
+
+```
+
+```{r plot_speed_per_subject, echo=FALSE, cache=TRUE}
+
+subjects = E2.trial_number_df$subj_id%>%unique()
+E2.trial_number_df %>%
+  filter(subj_id %in% subjects[11:20] & RT<5000) %>%
+  ggplot(aes(x=i, y=RT, color=resp)) +
+  geom_line() +
+  facet_wrap(~subj_id)
+
+```
+
+## Reproducing Fig. 9 from Chun & Wolfe '96
+
+Do subjects update their decision criterion after a miss? The answer is no. 
+
+```{r chun_figure, echo=FALSE, cache=TRUE}
+
+lastError <- function(error_vec) {
+  last_error <- NaN
+  count_vec <- c()
+  for (i in 1:length(error_vec)) {
+    if (error_vec[i]) {
+      last_error = 0
+    } else {
+      last_error = last_error+1
+    }
+    count_vec = c(count_vec,last_error)
+  }
+  return(count_vec)
+}
+
+nextError <- function(error_vec) {
+  next_error <- NaN
+  count_vec <- c()
+  for (i in length(error_vec):1) { # running backward
+    if (error_vec[i]) {
+      next_error = 0
+    } else {
+      next_error = next_error-1
+    }
+    count_vec = c(next_error, count_vec)
+  }
+  return(count_vec)
+}
+
+last_misses <- trial_number_df %>% 
+  filter(RT<5000) %>%
+  group_by(exp,subj_id,resp) %>%
+  mutate(ZRT = (RT-mean(RT))/sd(RT),
+         block = ceiling(i/16),
+         miss = !correct & !resp) %>%
+  group_by(exp, subj_id, block) %>%
+  mutate(relative_to_miss = lastError(miss)) 
+
+next_misses <- trial_number_df %>% 
+  filter(RT<5000) %>%
+  group_by(exp,subj_id,resp) %>%
+  mutate(ZRT = (RT-mean(RT))/sd(RT),
+         block = ceiling(i/16),
+         miss = !correct & !resp) %>%
+  group_by(exp, subj_id, block) %>%
+  mutate(relative_to_miss = nextError(miss)) 
+
+last_misses %>%
+  bind_rows(next_misses) %>%
+  filter(relative_to_miss > -6 & relative_to_miss<6) %>%
+  group_by(exp,subj_id,resp,relative_to_miss) %>%
+  summarise(ZRT=mean(ZRT)) %>%
+  group_by(exp,resp,relative_to_miss) %>%
+  summarise(se=se(ZRT),
+            ZRT=mean(ZRT)) %>%
+  ggplot(aes(x=relative_to_miss, y=ZRT, color=resp)) +
+  geom_line() +
+  geom_point() +
+  geom_ribbon(aes(ymin=ZRT-se, ymax=ZRT+se, fill=resp), alpha=0.5) +
+  facet_wrap(~exp)+
+  theme_classic() +
+  labs(x='Serial position',y='SD from mean RT')
+
+last_FAs <- trial_number_df %>% 
+  filter(RT<5000) %>%
+  group_by(exp,subj_id,resp) %>%
+  mutate(ZRT = (RT-mean(RT))/sd(RT),
+         block = ceiling(i/16),
+         FA = !correct & resp) %>%
+  group_by(exp, subj_id, block) %>%
+  mutate(relative_to_FA = lastError(FA)) 
+
+next_FAs <- trial_number_df %>% 
+  filter(RT<5000) %>%
+  group_by(exp,subj_id,resp) %>%
+  mutate(ZRT = (RT-mean(RT))/sd(RT),
+         block = ceiling(i/16),
+         FA = !correct & resp) %>%
+  group_by(exp, subj_id, block) %>%
+  mutate(relative_to_FA = nextError(FA)) 
+
+last_FAs %>%
+  bind_rows(next_FAs) %>%
+  filter(relative_to_FA > -6 & relative_to_FA<6) %>%
+  group_by(exp,subj_id,resp,relative_to_FA) %>%
+  summarise(ZRT=mean(ZRT)) %>%
+  group_by(exp,resp,relative_to_FA) %>%
+  summarise(se=se(ZRT),
+            ZRT=mean(ZRT)) %>%
+  ggplot(aes(x=relative_to_FA, y=ZRT, color=resp)) +
+  geom_line() +
+  geom_point() +
+  geom_ribbon(aes(ymin=ZRT-se, ymax=ZRT+se, fill=resp), alpha=0.5) +
+  facet_wrap(~exp)+
+  theme_classic() +
+  labs(x='Serial position',y='SD from mean RT')
+
+```
+
+The strongest effect is that subjects are slower when making errors (misses or FAs). There is no clear difference between trials before or after a miss. 
