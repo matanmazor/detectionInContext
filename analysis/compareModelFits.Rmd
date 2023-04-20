@@ -20,7 +20,8 @@ groundhog.library(
     'brms', # for mixed effects modeling
     'BayesFactor',# for Bayesian t test
     'jsonlite', #parsing data from sort_trial
-    'afex' #for anova
+    'afex', #for anova
+    'gridExtra' #for subplot
   ), "2022-12-01"
 )
 r_refs("r-references.bib")
@@ -127,22 +128,6 @@ for (m_model in 1:6) {
   }
 }
 
-exp2_m1_fit <- read.csv(paste('../modelling/model_fits/model_m1/data_E2/all_subjects.csv', sep=''));
-
-exp2_m4_fit <- read.csv(paste('../modelling/model_fits/model_m4/data_E2/all_subjects.csv', sep=''));
-
-exp3_m1_fit <- read.csv(paste('../modelling/model_fits/model_m1/data_E3/all_subjects.csv', sep=''));
-
-exp3_m4_fit <- read.csv(paste('../modelling/model_fits/model_m4/data_E3/all_subjects.csv', sep=''));
-
-exp4_m1_fit <- read.csv(paste('../modelling/model_fits/model_m1/data_E4/all_subjects.csv', sep=''));
-
-exp4_m2_fit <- read.csv(paste('../modelling/model_fits/model_m2/data_E4/all_subjects.csv', sep=''));
-
-exp4_m3_fit <- read.csv(paste('../modelling/model_fits/model_m3/data_E4/all_subjects.csv', sep=''));
-
-exp4_m5_fit <- read.csv(paste('../modelling/model_fits/model_m5/data_E4/all_subjects.csv', sep=''));
-
 exp_fit_df %>%
   group_by(data,subj_id)%>%
   mutate(relative_BIC=BIC-mean(BIC)) %>%
@@ -165,6 +150,227 @@ Together, data from Exp. 2 was best described by a model that assumes evidence a
 
 When allowed to vary, drift noise in target-absent trials was significantly reduced relative to target-present trials (`r apa_print(exp2_m4_fit$noiseabsent%>%t.test(mu=1))$full_result` for a t-test against 1). However, releasing the equal variance assumption did not significantly improve model fit, as indicated by the lower BIC for model 1 compared to model 4. 
 
+#### Generated data
+
+```{r qualitative_fit, fig.cap="Model fit results for experiments 2-4. Darker values correspond to better fits."}
+
+get_gen_data <- function(E, label) {
+  
+  E$true_data <- read.csv(sprintf('..\\modelling\\data\\E%d.csv',label)) %>% 
+  mutate(present = present/2+0.5,
+         resp=ifelse(correct==1, present, 1-present))
+  
+  E$model_df <- E$true_data %>%
+  dplyr::select(subj_id, rt, correct, present, resp) %>%
+  mutate(model='true')
+  
+  for (i in 1:6) {
+    E[[sprintf('m%d_gen_data',i)]] <- 
+      read.csv(sprintf('..\\modelling\\model_fits\\model_m%d\\data_E%d\\all_subjects_gen.csv',i,label)) %>%
+  rename(rt=RT) %>%
+  mutate(present = present/2+0.5,
+         resp=ifelse(correct==1, present, 1-present))
+    
+    E$model_df <- E$model_df %>%
+      rbind(E[[sprintf('m%d_gen_data',i)]] %>%
+          dplyr::select(subj_id, rt, correct, present, resp) %>%
+          mutate(model=sprintf('m%d',i)))
+  }
+  
+  return(E)
+}
+
+E2 = get_gen_data(list(),2)
+E3 = get_gen_data(list(),3)
+E4 = get_gen_data(list(),4)
+
+m1_gen_data <- read.csv('..\\modelling\\data\\generated_data\\m1_generated.csv') %>% 
+  mutate(resp=ifelse(correct, present, 1-present))
+
+m2_gen_data <- read.csv('..\\modelling\\data\\generated_data\\m2_generated.csv') %>% 
+  mutate(resp=ifelse(correct, present, 1-present))
+
+m3_gen_data <- read.csv('..\\modelling\\data\\generated_data\\m3_generated.csv') %>% 
+  mutate(resp=ifelse(correct, present, 1-present))
+
+m4_gen_data <- read.csv('..\\modelling\\data\\generated_data\\m4_generated.csv') %>% 
+  mutate(resp=ifelse(correct, present, 1-present))
+
+m5_gen_data <- read.csv('..\\modelling\\data\\generated_data\\m5_generated.csv') %>% 
+  mutate(resp=ifelse(correct, present, 1-present))
+
+m6_gen_data <- read.csv('..\\modelling\\data\\generated_data\\m6_generated.csv') %>% 
+  mutate(resp=ifelse(correct, present, 1-present))
+
+plotRTdists <- function(df, filepath) {
+  
+  present <- ggplot(df %>%
+                filter(present==1 & correct==1), aes(x=rt) ) +
+    geom_histogram( aes(y = ..density..), fill="#377eb8" ) +
+    geom_histogram( data = df %>%
+                filter(present==1 & correct==0), 
+                aes(x = rt, y = -..density..), fill= "#e41a1c") +
+    theme_classic() +
+    labs(x="RT (seconds)", title="Target present trials") +
+    scale_x_continuous(limits=c(0,5))+
+    scale_y_continuous(limits=c(-1,1))
+  
+  absent <- ggplot(df %>%
+                filter(present==-1 & correct==1), aes(x=rt) ) +
+    geom_histogram( aes(y = ..density..), fill="#e41a1c" ) +
+    geom_histogram( data = df %>%
+                filter(present==-1 & correct==0), 
+                aes(x = rt, y = -..density..), fill= "#377eb8") +
+    theme_classic() +
+    labs(x="RT (seconds)", title="Target absent trials")+
+    scale_x_continuous(limits=c(0,5))+
+    scale_y_continuous(limits=c(-1,1))
+  
+  ggsave(filepath, arrangeGrob(present,absent),width=7,height=4)
+
+  return(grid.arrange(present, absent, ncol=2))
+}
+
+```
+
+To compare fitted models to empirical data, we generated artificial data from subject-specific fits. We then asked whether artificial data displays the same qualitative markers as human data. Specifically:
+
+1. Decisions about absence are slower than decisions about presence by `r round(E2$true_data%>%group_by(resp,subj_id)%>%summarise(rt=mean(rt))%>%spread(resp,rt,sep='')%>%mutate(diff=resp0-resp1)%>%pull(diff)%>%mean()*1000)` ms (`r apa_print(E2$true_data%>%group_by(resp,subj_id)%>%summarise(rt=mean(rt))%>%spread(resp,rt,sep='')%>%mutate(diff=resp0-resp1)%>%pull(diff)%>%t.test())$statistic`).
+2. The timing of decisions about absence is more variable than that of decisions about presence (`r apa_print(E2$true_data%>%group_by(resp,subj_id)%>%summarise(rtsd=sd(rt))%>%spread(resp,rtsd,sep='')%>%mutate(diff=resp0-resp1)%>%pull(diff)%>%t.test())$full_result`).
+3.  Incorrect "absence" decisions (misses) are slower than correct "absence" decisions (correct rejections) by `r round(E2$true_data %>% filter(resp==0)%>%group_by(correct,subj_id)%>%summarise(rt=mean(rt))%>%spread(correct,rt,sep='')%>%mutate(diff=correct0-correct1)%>%pull(diff)%>%mean(na.rm=T)*1000)` ms (`r apa_print(E2$true_data %>% filter(resp==0)%>%group_by(correct,subj_id)%>%summarise(rt=mean(rt))%>%spread(correct,rt,sep='')%>%mutate(diff=correct0-correct1)%>%pull(diff)%>%t.test())$statistic`).
+4. Incorrect "presence" decisions (false alarms) are slower than correct "presence" decisions (hits) by `r round(E2$true_data %>% filter(resp==1)%>%group_by(correct,subj_id)%>%summarise(rt=mean(rt))%>%spread(correct,rt,sep='')%>%mutate(diff=correct0-correct1)%>%pull(diff)%>%mean(na.rm=T)*1000)` ms (`r apa_print(E2$true_data %>% filter(resp==1)%>%group_by(correct,subj_id)%>%summarise(rt=mean(rt))%>%spread(correct,rt,sep='')%>%mutate(diff=correct0-correct1)%>%pull(diff)%>%t.test())$statistic`).
+
+```{r, fig.cap="Qualitative patterns of response times in Exp. 2. Error bars represent the mean within-subject standard deviation in response times."}
+E2p <- E2$true_data %>%
+  mutate(response=factor(resp, levels=c(1,0), labels=c('PRESENT','ABSENT')),
+         correct=factor(correct,levels=c(0,1), labels=c('FALSE','TRUE'))) %>%
+  group_by(subj_id,response,correct) %>%
+  summarize(sd = sd(rt),
+            rt=mean(rt)) %>%
+  group_by(response,correct)%>%
+  summarise(sd=mean(sd, na.rm=T),
+            rt = mean(rt, na.rm=T))%>%
+  ggplot(aes(x=correct,fill=response,y=rt)) +
+  geom_bar(stat="identity", position=position_dodge())+
+  geom_errorbar(aes(ymin=rt-sd, ymax=rt+sd), width=0.2,position = position_dodge(width=0.9)) +
+  scale_fill_manual(values=c("#377eb8","#e41a1c")) +
+  coord_flip()+
+  theme_classic()
+ggsave('figures/E2_rt_by_acc_resp.png',E2p,width=6,height=2)
+
+M1p <- m1_gen_data %>%
+  mutate(response=factor(resp, levels=c(1,0), labels=c('PRESENT','ABSENT')),
+         correct=factor(correct,levels=c("False", "True"))) %>%
+  group_by(subj_id,response,correct) %>%
+  summarize(sd = sd(rt),
+            rt=mean(rt)) %>%
+  group_by(response,correct)%>%
+  summarise(sd=mean(sd, na.rm=T),
+            rt = mean(rt, na.rm=T))%>%
+  ggplot(aes(x=correct,fill=response,y=rt)) +
+  geom_bar(stat="identity", position=position_dodge())+
+  geom_errorbar(aes(ymin=rt-sd, ymax=rt+sd), width=0.2,position = position_dodge(width=0.9)) +
+  scale_fill_manual(values=c("#377eb8","#e41a1c")) +
+  coord_flip()+
+  theme_classic()
+ggsave('figures/m1_rt_by_acc_resp.png',M1p,width=6,height=2)
+
+M2p <- m2_gen_data %>%
+  mutate(response=factor(resp, levels=c(1,0), labels=c('PRESENT','ABSENT')),
+         correct=factor(correct,levels=c("False", "True"))) %>%
+  group_by(subj_id,response,correct) %>%
+  summarize(sd = sd(rt),
+            rt=mean(rt)) %>%
+  group_by(response,correct)%>%
+  summarise(sd=mean(sd, na.rm=T),
+            rt = mean(rt, na.rm=T))%>%
+  ggplot(aes(x=correct,fill=response,y=rt)) +
+  geom_bar(stat="identity", position=position_dodge())+
+  geom_errorbar(aes(ymin=rt-sd, ymax=rt+sd), width=0.2,position = position_dodge(width=0.9)) +
+  scale_fill_manual(values=c("#377eb8","#e41a1c")) +
+  coord_flip()+
+  theme_classic()
+ggsave('figures/m2_rt_by_acc_resp.png',M2p,width=6,height=2)
+
+M3p <- m3_gen_data %>%
+  mutate(response=factor(resp, levels=c(1,0), labels=c('PRESENT','ABSENT')),
+         correct=factor(correct,levels=c("False", "True"))) %>%
+  group_by(subj_id,response,correct) %>%
+  summarize(sd = sd(rt),
+            rt=mean(rt)) %>%
+  group_by(response,correct)%>%
+  summarise(sd=mean(sd, na.rm=T),
+            rt = mean(rt, na.rm=T))%>%
+  ggplot(aes(x=correct,fill=response,y=rt)) +
+  geom_bar(stat="identity", position=position_dodge())+
+  geom_errorbar(aes(ymin=rt-sd, ymax=rt+sd), width=0.2,position = position_dodge(width=0.9)) +
+  scale_fill_manual(values=c("#377eb8","#e41a1c")) +
+  coord_flip()+
+  theme_classic()
+ggsave('figures/m3_rt_by_acc_resp.png',M3p,width=6,height=2)
+
+M4p <- m4_gen_data %>%
+  mutate(response=factor(resp, levels=c(1,0), labels=c('PRESENT','ABSENT')),
+         correct=factor(correct,levels=c("False", "True"))) %>%
+  group_by(subj_id,response,correct) %>%
+  summarize(sd = sd(rt),
+            rt=mean(rt)) %>%
+  group_by(response,correct)%>%
+  summarise(sd=mean(sd, na.rm=T),
+            rt = mean(rt, na.rm=T))%>%
+  ggplot(aes(x=correct,fill=response,y=rt)) +
+  geom_bar(stat="identity", position=position_dodge())+
+  geom_errorbar(aes(ymin=rt-sd, ymax=rt+sd), width=0.2,position = position_dodge(width=0.9)) +
+  scale_fill_manual(values=c("#377eb8","#e41a1c")) +
+  coord_flip()+
+  theme_classic()
+ggsave('figures/m4_rt_by_acc_resp.png',M4p,width=6,height=2)
+
+M5p <- m5_gen_data %>%
+  mutate(response=factor(resp, levels=c(1,0), labels=c('PRESENT','ABSENT')),
+         correct=factor(correct,levels=c("False", "True"))) %>%
+  group_by(subj_id,response,correct) %>%
+  summarize(sd = sd(rt),
+            rt=mean(rt)) %>%
+  group_by(response,correct)%>%
+  summarise(sd=mean(sd, na.rm=T),
+            rt = mean(rt, na.rm=T))%>%
+  ggplot(aes(x=correct,fill=response,y=rt)) +
+  geom_bar(stat="identity", position=position_dodge())+
+  geom_errorbar(aes(ymin=rt-sd, ymax=rt+sd), width=0.2,position = position_dodge(width=0.9)) +
+  scale_fill_manual(values=c("#377eb8","#e41a1c")) +
+  coord_flip()+
+  theme_classic()
+ggsave('figures/m5_rt_by_acc_resp.png',M5p,width=6,height=2)
+
+M6p <- m6_gen_data %>%
+  mutate(response=factor(resp, levels=c(1,0), labels=c('PRESENT','ABSENT')),
+         correct=factor(correct,levels=c("False", "True"))) %>%
+  group_by(subj_id,response,correct) %>%
+  summarize(sd = sd(rt),
+            rt=mean(rt)) %>%
+  group_by(response,correct)%>%
+  summarise(sd=mean(sd, na.rm=T),
+            rt = mean(rt, na.rm=T))%>%
+  ggplot(aes(x=correct,fill=response,y=rt)) +
+  geom_bar(stat="identity", position=position_dodge())+
+  geom_errorbar(aes(ymin=rt-sd, ymax=rt+sd), width=0.2,position = position_dodge(width=0.9)) +
+  scale_fill_manual(values=c("#377eb8","#e41a1c")) +
+  coord_flip()+
+  theme_classic()
+ggsave('figures/m6_rt_by_acc_resp.png',M6p,width=6,height=2)
+
+E2p
+```
+In M1-generated data, we find that:
+
+1. Decisions about absence are slower than decisions about presence by only `r round(E2$m1_gen_data%>%group_by(resp,subj_id)%>%summarise(rt=mean(rt))%>%spread(resp,rt,sep='')%>%mutate(diff=resp0-resp1)%>%pull(diff)%>%mean()*1000)` ms (`r apa_print(E2$m1_gen_data%>%group_by(resp,subj_id)%>%summarise(rt=mean(rt))%>%spread(resp,rt,sep='')%>%mutate(diff=resp0-resp1)%>%pull(diff)%>%t.test())$statistic`).
+2. The timing of decisions about absence is **less** variable than that of decisions about presence (`r apa_print(E2$m1_gen_data%>%group_by(resp,subj_id)%>%summarise(rtsd=sd(rt))%>%spread(resp,rtsd,sep='')%>%mutate(diff=resp0-resp1)%>%pull(diff)%>%t.test())$full_result`).
+3.  Incorrect "absence" decisions (misses) are slower than correct "absence" decisions (correct rejections) by `r round(E2$m1_gen_data %>% filter(resp==0)%>%group_by(correct,subj_id)%>%summarise(rt=mean(rt))%>%spread(correct,rt,sep='')%>%mutate(diff=correct0-correct1)%>%pull(diff)%>%mean(na.rm=T)*1000)` ms (`r apa_print(E2$m1_gen_data %>% filter(resp==0)%>%group_by(correct,subj_id)%>%summarise(rt=mean(rt))%>%spread(correct,rt,sep='')%>%mutate(diff=correct0-correct1)%>%pull(diff)%>%t.test())$statistic`).
+4. Incorrect "presence" decisions (false alarms) are **faster** than correct "presence" decisions (hits) by `r abs(round(E2$m1_gen_data %>% filter(resp==1)%>%group_by(correct,subj_id)%>%summarise(rt=mean(rt))%>%spread(correct,rt,sep='')%>%mutate(diff=correct0-correct1)%>%pull(diff)%>%mean(na.rm=T)*1000))` ms (`r apa_print(E2$m1_gen_data %>% filter(resp==1)%>%group_by(correct,subj_id)%>%summarise(rt=mean(rt))%>%spread(correct,rt,sep='')%>%mutate(diff=correct0-correct1)%>%pull(diff)%>%t.test())$statistic`).
+
+Overall, the winning model fails to capture (and in fact, makes opposite predictions) two key properties of the data: the timing of decisions about absence is more variable than that of decisions about presence, and hits are faster on average than false alarms. The model that fairs best on these qualitative measures is model 2, with decisions about absence being slower than decisions about presence by `r round(E2$m2_gen_data%>%group_by(resp,subj_id)%>%summarise(rt=mean(rt))%>%spread(resp,rt,sep='')%>%mutate(diff=resp0-resp1)%>%pull(diff)%>%mean()*1000)` ms, and no significant difference in the standard deviation of response times for the two responses (`r apa_print(E2$m2_gen_data%>%group_by(resp,subj_id)%>%summarise(rtsd=sd(rt))%>%spread(resp,rtsd,sep='')%>%mutate(diff=resp0-resp1)%>%pull(diff)%>%t.test())$estimate`). Incorrect decisions were slower for this model in both target-absent (`r apa_print(E2$m2_gen_data %>% filter(resp==0)%>%group_by(correct,subj_id)%>%summarise(rt=mean(rt))%>%spread(correct,rt,sep='')%>%mutate(diff=correct0-correct1)%>%pull(diff)%>%t.test())$full_result`) and  target-present decisions (`r apa_print(E2$m2_gen_data %>% filter(resp==1)%>%group_by(correct,subj_id)%>%summarise(rt=mean(rt))%>%spread(correct,rt,sep='')%>%mutate(diff=correct0-correct1)%>%pull(diff)%>%t.test())$full_result`). 
+
 ### Experiment 3: dusty windows
 
 In Exp. 3, the target stimulus was partly occluded by black pixels. Here too, for the purpose of this original model selection stage, we collapsed over all trials and asked which model fit the data best. 
@@ -173,6 +379,24 @@ Like in Exp. 2, symmetric model 1 fit the data best (mean adjusted BIC =  `r exp
 
 Mirroring the results from Exp. 2, data was best captured by a symmetric model with equal variance. Here too, drift rates in the fitted models were significantly steeper in target-absent compared to target-present trials (`r apa_print(t.test(exp3_m1_fit$driftabsent+exp3_m1_fit$driftpresent))$full_result`). Again, this was balanced by a starting point bias that was closer to the upper boundary (`r apa_print(t.test(exp3_m1_fit$IC))$full_result`). Finally, despite a preference for model 1, when allowed to vary between target-absent and target-absent trials, drift noise was significantly reduced in target-absent trials (`r apa_print(exp3_m4_fit$noiseabsent%>%t.test(mu=1))$full_result` for a t-test against 1).
 
+#### Generated data
+
+In Exp. 3, we find that:
+
+1. Decisions about absence are slower than decisions about presence by `r round(E3$true_data%>%group_by(resp,subj_id)%>%summarise(rt=mean(rt))%>%spread(resp,rt,sep='')%>%mutate(diff=resp0-resp1)%>%pull(diff)%>%mean()*1000)` ms (`r apa_print(E3$true_data%>%group_by(resp,subj_id)%>%summarise(rt=mean(rt))%>%spread(resp,rt,sep='')%>%mutate(diff=resp0-resp1)%>%pull(diff)%>%t.test())$statistic`).
+2. The timing of decisions about absence is more variable than that of decisions about presence (`r apa_print(E3$true_data%>%group_by(resp,subj_id)%>%summarise(rtsd=sd(rt))%>%spread(resp,rtsd,sep='')%>%mutate(diff=resp0-resp1)%>%pull(diff)%>%t.test())$full_result`).
+3.  Incorrect "absence" decisions (misses) are slower than correct "absence" decisions (correct rejections) by `r round(E3$true_data %>% filter(resp==0)%>%group_by(correct,subj_id)%>%summarise(rt=mean(rt))%>%spread(correct,rt,sep='')%>%mutate(diff=correct0-correct1)%>%pull(diff)%>%mean(na.rm=T)*1000)` ms (`r apa_print(E3$true_data %>% filter(resp==0)%>%group_by(correct,subj_id)%>%summarise(rt=mean(rt))%>%spread(correct,rt,sep='')%>%mutate(diff=correct0-correct1)%>%pull(diff)%>%t.test())$statistic`).
+4. Incorrect "presence" decisions (false alarms) are slower than correct "presence" decisions (hits) by `r round(E3$true_data %>% filter(resp==1)%>%group_by(correct,subj_id)%>%summarise(rt=mean(rt))%>%spread(correct,rt,sep='')%>%mutate(diff=correct0-correct1)%>%pull(diff)%>%mean(na.rm=T)*1000)` ms (`r apa_print(E3$true_data %>% filter(resp==1)%>%group_by(correct,subj_id)%>%summarise(rt=mean(rt))%>%spread(correct,rt,sep='')%>%mutate(diff=correct0-correct1)%>%pull(diff)%>%t.test())$statistic`).
+
+In M1-generated data, we find that:
+
+1. Decisions about absence are slower than decisions about presence by only `r round(E3$m1_gen_data%>%group_by(resp,subj_id)%>%summarise(rt=mean(rt))%>%spread(resp,rt,sep='')%>%mutate(diff=resp0-resp1)%>%pull(diff)%>%mean()*1000)` ms (`r apa_print(E3$m1_gen_data%>%group_by(resp,subj_id)%>%summarise(rt=mean(rt))%>%spread(resp,rt,sep='')%>%mutate(diff=resp0-resp1)%>%pull(diff)%>%t.test())$statistic`).
+2. The timing of decisions about absence is **less** variable than that of decisions about presence (`r apa_print(E3$m1_gen_data%>%group_by(resp,subj_id)%>%summarise(rtsd=sd(rt))%>%spread(resp,rtsd,sep='')%>%mutate(diff=resp0-resp1)%>%pull(diff)%>%t.test())$full_result`).
+3.  Incorrect "absence" decisions (misses) are slower than correct "absence" decisions (correct rejections) by `r round(E3$m1_gen_data %>% filter(resp==0)%>%group_by(correct,subj_id)%>%summarise(rt=mean(rt))%>%spread(correct,rt,sep='')%>%mutate(diff=correct0-correct1)%>%pull(diff)%>%mean(na.rm=T)*1000)` ms (`r apa_print(E3$m1_gen_data %>% filter(resp==0)%>%group_by(correct,subj_id)%>%summarise(rt=mean(rt))%>%spread(correct,rt,sep='')%>%mutate(diff=correct0-correct1)%>%pull(diff)%>%t.test())$statistic`).
+4. Incorrect "presence" decisions (false alarms) are **faster** than correct "presence" decisions (hits) by `r abs(round(E3$m1_gen_data %>% filter(resp==1)%>%group_by(correct,subj_id)%>%summarise(rt=mean(rt))%>%spread(correct,rt,sep='')%>%mutate(diff=correct0-correct1)%>%pull(diff)%>%mean(na.rm=T)*1000))` ms (`r apa_print(E3$m1_gen_data %>% filter(resp==1)%>%group_by(correct,subj_id)%>%summarise(rt=mean(rt))%>%spread(correct,rt,sep='')%>%mutate(diff=correct0-correct1)%>%pull(diff)%>%t.test())$statistic`).
+
+Again, the winning model fails to capture (and in fact, makes opposite predictions) the same two key properties of the data: the timing of decisions about absence is more variable than that of decisions about presence, and hits are faster on average than false alarms. The model that fairs best on these qualitative measures is model 2, with decisions about absence being slower than decisions about presence by `r round(E3$m2_gen_data%>%group_by(resp,subj_id)%>%summarise(rt=mean(rt))%>%spread(resp,rt,sep='')%>%mutate(diff=resp0-resp1)%>%pull(diff)%>%mean(na.rm=T)*1000)` ms, and higher standard deviations of response times in target-absent responses (`r apa_print(E3$m2_gen_data%>%group_by(resp,subj_id)%>%summarise(rtsd=sd(rt))%>%spread(resp,rtsd,sep='')%>%mutate(diff=resp0-resp1)%>%pull(diff)%>%t.test())$estimate`). Incorrect decisions were slower for this model in both target-absent (`r apa_print(E3$m2_gen_data %>% filter(resp==0)%>%group_by(correct,subj_id)%>%summarise(rt=mean(rt))%>%spread(correct,rt,sep='')%>%mutate(diff=correct0-correct1)%>%pull(diff)%>%t.test())$full_result`) and  target-present decisions (`r apa_print(E3$m2_gen_data %>% filter(resp==1)%>%group_by(correct,subj_id)%>%summarise(rt=mean(rt))%>%spread(correct,rt,sep='')%>%mutate(diff=correct0-correct1)%>%pull(diff)%>%t.test())$full_result`). 
+
 ### Experiment 4: line occluders
 
 In Exp. 4, stimuli were partly occluded by black horizontal bars. Here too, we collapsed over low and high occlusion levels for the purpose of initial model selection. 
@@ -180,4 +404,44 @@ In Exp. 4, stimuli were partly occluded by black horizontal bars. Here too, we c
 Unlike Exp. 2 and 3, here the best performing model was model 2, where drift rate was set to 0 in target-absent trials, and the lower boundary linearly collapsed  (mean adjusted BIC =  `r exp_fit_df%>%filter(data==4 & model==1)%>%pull(BIC)%>%mean()%>%printnum()`). Model 2 captured the data significantly better than model 1 (`r apa_print(t.test(exp_fit_df%>%filter(model==2 & data==4)%>%pull(BIC)-exp_fit_df%>%filter(model==1 & data==4)%>%pull(BIC)))$statistic`), 4 (`r apa_print(t.test(exp_fit_df%>%filter(model==2 & data==4)%>%pull(BIC)-exp_fit_df%>%filter(model==4 & data==4)%>%pull(BIC)))$statistic`), and 6 (`r apa_print(t.test(exp_fit_df%>%filter(model==2 & data==4)%>%pull(BIC)-exp_fit_df%>%filter(model==6 & data==4)%>%pull(BIC)))$statistic`), and marginally over its corresponding unequal-variance variant model 5 (`r apa_print(t.test(exp_fit_df%>%filter(model==2 & data==4)%>%pull(BIC)-exp_fit_df%>%filter(model==5 & data==4)%>%pull(BIC)))$statistic`). BIC scores for model 2 were not significantly lower than for model 3, where boundary collapse time was allowed to vary (`r apa_print(t.test(exp_fit_df%>%filter(model==2 & data==4)%>%pull(BIC)-exp_fit_df%>%filter(model==3 & data==4)%>%pull(BIC)))$statistic`).
 
 In model 2, the upper and lower boundaries are allowed to collapse. As expected, the lower boundary collapsed much more than the upper boundary in the fitted models (`r apa_print(t.test(exp4_m2_fit$lowercollapse+exp4_m2_fit$uppercollapse))$full_result`). In model 3, the lower boundary can start collapsing after a fixed time. This was estimated as `r exp4_m3_fit$collapsetime%>%mean()%>%printnum()` seconds on average. Again, when allowed to vary between conditions, drift noise was significantly lower in target-absent trials (`r apa_print(t.test(exp4_m5_fit$noiseabsent, mu=1))$statistic`). 
+
+#### Generated data
+
+In Exp. 4, we find that:
+
+1. Decisions about absence are slower than decisions about presence by `r round(E4$true_data%>%group_by(resp,subj_id)%>%summarise(rt=mean(rt))%>%spread(resp,rt,sep='')%>%mutate(diff=resp0-resp1)%>%pull(diff)%>%mean()*1000)` ms (`r apa_print(E4$true_data%>%group_by(resp,subj_id)%>%summarise(rt=mean(rt))%>%spread(resp,rt,sep='')%>%mutate(diff=resp0-resp1)%>%pull(diff)%>%t.test())$statistic`).
+2. The timing of decisions about absence is more variable than that of decisions about presence (`r apa_print(E4$true_data%>%group_by(resp,subj_id)%>%summarise(rtsd=sd(rt))%>%spread(resp,rtsd,sep='')%>%mutate(diff=resp0-resp1)%>%pull(diff)%>%t.test())$full_result`).
+3.  Incorrect "absence" decisions (misses) are slower than correct "absence" decisions (correct rejections) by `r round(E4$true_data %>% filter(resp==0)%>%group_by(correct,subj_id)%>%summarise(rt=mean(rt))%>%spread(correct,rt,sep='')%>%mutate(diff=correct0-correct1)%>%pull(diff)%>%mean(na.rm=T)*1000)` ms (`r apa_print(E4$true_data %>% filter(resp==0)%>%group_by(correct,subj_id)%>%summarise(rt=mean(rt))%>%spread(correct,rt,sep='')%>%mutate(diff=correct0-correct1)%>%pull(diff)%>%t.test())$statistic`).
+4. Incorrect "presence" decisions (false alarms) are slower than correct "presence" decisions (hits) by `r round(E4$true_data %>% filter(resp==1)%>%group_by(correct,subj_id)%>%summarise(rt=mean(rt))%>%spread(correct,rt,sep='')%>%mutate(diff=correct0-correct1)%>%pull(diff)%>%mean(na.rm=T)*1000)` ms (`r apa_print(E4$true_data %>% filter(resp==1)%>%group_by(correct,subj_id)%>%summarise(rt=mean(rt))%>%spread(correct,rt,sep='')%>%mutate(diff=correct0-correct1)%>%pull(diff)%>%t.test())$statistic`).
+
+In M2-generated data, we find that:
+
+1. Decisions about absence are slower than decisions about presence by only `r round(E4$m2_gen_data%>%group_by(resp,subj_id)%>%summarise(rt=mean(rt))%>%spread(resp,rt,sep='')%>%mutate(diff=resp0-resp1)%>%pull(diff)%>%mean()*1000)` ms (`r apa_print(E4$m2_gen_data%>%group_by(resp,subj_id)%>%summarise(rt=mean(rt))%>%spread(resp,rt,sep='')%>%mutate(diff=resp0-resp1)%>%pull(diff)%>%t.test())$statistic`).
+2. The timing of decisions about absence is equally variable in decisions about presence and absence (`r apa_print(E4$m2_gen_data%>%group_by(resp,subj_id)%>%summarise(rtsd=sd(rt))%>%spread(resp,rtsd,sep='')%>%mutate(diff=resp0-resp1)%>%pull(diff)%>%t.test())$full_result`).
+3.  Incorrect "absence" decisions (misses) are slower than correct "absence" decisions (correct rejections) by `r round(E4$m2_gen_data %>% filter(resp==0)%>%group_by(correct,subj_id)%>%summarise(rt=mean(rt))%>%spread(correct,rt,sep='')%>%mutate(diff=correct0-correct1)%>%pull(diff)%>%mean(na.rm=T)*1000)` ms (`r apa_print(E4$m2_gen_data %>% filter(resp==0)%>%group_by(correct,subj_id)%>%summarise(rt=mean(rt))%>%spread(correct,rt,sep='')%>%mutate(diff=correct0-correct1)%>%pull(diff)%>%t.test())$statistic`).
+4. Incorrect "presence" decisions (false alarms) are slower than correct "presence" decisions (hits) by `r round(E4$m2_gen_data %>% filter(resp==1)%>%group_by(correct,subj_id)%>%summarise(rt=mean(rt))%>%spread(correct,rt,sep='')%>%mutate(diff=correct0-correct1)%>%pull(diff)%>%mean(na.rm=T)*1000)` ms (`r apa_print(E4$m2_gen_data %>% filter(resp==1)%>%group_by(correct,subj_id)%>%summarise(rt=mean(rt))%>%spread(correct,rt,sep='')%>%mutate(diff=correct0-correct1)%>%pull(diff)%>%t.test())$statistic`).
+
+## Adding condition effects
+
+We re-fitted models 1-3 to data from Exp. 2, but this time allowing drift parameters to vary as a function of condition.  
+
+
+```{r model_fit_with_condition_effects, fig.cap="Model fit results for experiment 2, with condition effects. Darker values correspond to better fits."}
+
+for (m_model in c('1c', '2c', '3c')) {
+  for (exp_data in 2) {
+    exp_fit_df <- exp_fit_df %>% rbind(
+      read.csv(paste('../modelling/model_fits/model_m', 
+                            as.character(m_model), '/data_E', 
+                            as.character(exp_data), '/all_subjects.csv', sep='')) %>%
+      dplyr::select(subj_id,BIC) %>%
+      mutate(model=m_model,data=exp_data)
+    )
+  }
+}
+
+```
+
+Again, symmetric model 1 fit the data best (mean adjusted BIC =  `r exp_fit_df%>%filter(data==2 & model=='1c')%>%pull(BIC)%>%mean()%>%printnum()`), significantly better than models 2 (`r apa_print(t.test(exp_fit_df%>%filter(model=='1c' & data==2)%>%pull(BIC)-exp_fit_df%>%filter(model=='2c' & data==2)%>%pull(BIC)))$statistic`), and 3 (`r apa_print(t.test(exp_fit_df%>%filter(model=='1c' & data==2)%>%pull(BIC)-exp_fit_df%>%filter(model=='3c' & data==2)%>%pull(BIC)))$statistic`).
+
 
