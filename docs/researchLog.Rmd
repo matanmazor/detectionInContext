@@ -52,4 +52,12 @@ I was surprised that there were fewer unique accuracy values per condition and t
 
 ## New pilot experiment - Row occluders + confidence (2022-03-09)
 
-I launched a new version of the experiment, where entire rows are occluded, and subjects rate their confidence in the second block.
+I launched a new version of the experiment, where entire rows are occluded, and subjects rate their confidence in the second block. The results are like the other occlusion experiment. Confidence in absence is affected by the row manipulation, but RT isn't.
+
+## DDM simulations (2022-04-21)
+
+I simulated different version of the DDM model, with an attempt to reproduce the qualitative behavioural effects (presence responses are slower, errors are slower in both yes and no responses, and the variability in target-absent response times is higher than that of target-present response times).
+
+Two models manage to reproduce these patterns, without the variability effect. One where drift rate is samples from $N(0.5,0.5)$ for target-present trials and $N(-0.5,0.5)$ for target absent trials. The starting point is closer to the upper boundary ($z=0.5$, $a=1.5$). This model reproduces the qualitative mean differences in RT, but not differences in spread. The second model assumes drift rate is 0 for target-absent and positive (0.5) for target-present with a collapsing boundary that starts collapsing sharply after a second. This model produces the qualitative mean differences in RT, as well as the differences in variability.
+
+I also tried a model where the number of accumulators \>1, and where "target-present" decisions can be triggered by one accumulator reaching the upper boundary, but "target-absent" decisions are only triggered when all accumulators reach the lower boundary. I couldn't find a set of parameters for which this model reproduces the qualitative pattern.
