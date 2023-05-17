@@ -61,3 +61,7 @@ I simulated different version of the DDM model, with an attempt to reproduce the
 Two models manage to reproduce these patterns, without the variability effect. One where drift rate is samples from $N(0.5,0.5)$ for target-present trials and $N(-0.5,0.5)$ for target absent trials. The starting point is closer to the upper boundary ($z=0.5$, $a=1.5$). This model reproduces the qualitative mean differences in RT, but not differences in spread. The second model assumes drift rate is 0 for target-absent and positive (0.5) for target-present with a collapsing boundary that starts collapsing sharply after a second. This model produces the qualitative mean differences in RT, as well as the differences in variability.
 
 I also tried a model where the number of accumulators \>1, and where "target-present" decisions can be triggered by one accumulator reaching the upper boundary, but "target-absent" decisions are only triggered when all accumulators reach the lower boundary. I couldn't find a set of parameters for which this model reproduces the qualitative pattern.
+
+## Confidence in absence (2022-05-17)
+
+I feel like I reached a dead end with my attempts to come up with a reasonable evidence accumulation model, so leaving this aside for now. Instead, I thought we can focus on the fact that Exp. 4 found evidence of a difference in mean confidence in absence as a function of occlusion. We can then ask whether a similar difference will be found for context effects.
