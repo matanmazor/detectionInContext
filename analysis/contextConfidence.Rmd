@@ -1,0 +1,710 @@
+---
+title: "Exp. 5"
+author: "Matan Mazor"
+date: "2023-03-13"
+output: word_document
+---
+
+```{r setup, include = FALSE}
+
+library('groundhog')
+groundhog.library(
+  c(
+    'papaja',
+    'reticulate',
+    'tidyverse',
+    'broom',
+    'cowplot',
+    'MESS', # for AUCs
+    'lsr', # for effect sizes
+    'pwr', # for power calculations
+    'brms', # for mixed effects modeling
+    'BayesFactor',# for Bayesian t test
+    'jsonlite', #parsing data from sort_trial
+    'afex' #for anova
+  ), "2022-12-01"
+)
+r_refs("r-references.bib")
+knitr::opts_chunk$set(echo=F,message=F, warning=F)
+
+```
+
+```{r load_and_format_data, echo=FALSE, cache=TRUE}
+
+E5.raw_df <- read_csv('../experiments/letters5confidence/data/jatos_results_files_batch1/all_data.csv') %>%
+  filter(frame_index==0)%>%
+  mutate(subj_id=PROLIFIC_PID,
+         correct = as.numeric(correct),
+         RT = as.numeric(RT),
+         present=as.numeric(present),
+         resp = response==presence_key,
+         context=ifelse(context_string=='M SK','A',context)) 
+
+E5.raw_df_subjs <- E5.raw_df$subj_id%>%unique()
+
+# for some subjects, I wasn't able to download the pixel data for each trial. 
+# Data from these subjects is loaded separately.
+E5.data_from_txt_file <- read_csv('../experiments/letters5confidence/data/jatos_results_data_batch1.txt') %>%
+  mutate(subj_id=PROLIFIC_PID,
+         correct = as.numeric(correct),
+         RT = as.numeric(RT),
+         present=as.numeric(present),
+         resp = response==presence_key,
+         context=ifelse(context_string=='M SK','A',context)) %>%
+  filter(!(subj_id=='PROLIFIC_PID') & !(subj_id %in% E5.raw_df_subjs))
+  
+E5.raw_df <- E5.raw_df %>%
+  rbind(E5.data_from_txt_file)
+
+
+```
+```{r subject-comments}
+
+E5.comments <- E5.raw_df %>%
+  filter(substr(response,3,17)=='worker_comments') %>%
+  mutate(comment = substr(response,22,str_length(response)-2)) %>%
+  dplyr::select(subj_id, comment)
+
+E5.notice <- E5.raw_df %>%
+  filter(substr(response,3,14)=='notice_words')%>%
+  mutate(notice = substr(response,19,str_length(response)-2)) %>%
+  dplyr::select(subj_id, notice)
+
+
+```
+
+```{r exclude, echo=FALSE, cache=TRUE,include=FALSE}
+
+E5.low_accuracy <- E5.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    accuracy = mean(correct)) %>%
+    filter(accuracy<0.5) %>%
+  pull(subj_id)
+
+E5.too_slow <- E5.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    third_quartile_RT = quantile(RT,0.75)) %>%
+    filter(third_quartile_RT>5000) %>%
+  pull(subj_id)
+
+E5.too_fast <- E5.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    first_quartile_RT = quantile(RT,0.25)) %>%
+    filter(first_quartile_RT<100) %>%
+  pull(subj_id)
+
+E5.to_exclude <- c(
+  E5.low_accuracy,
+  E5.too_slow,
+  E5.too_fast
+) %>% unique()
+
+E5.df <- E5.raw_df %>%
+  filter(!(subj_id %in% E5.to_exclude)) %>%
+  mutate(cong = ifelse(context==target,1,0));
+  
+```
+
+```{r descriptives, echo=FALSE, cache=TRUE}
+
+
+E5.overall_descriptives <- E5.df %>%
+    filter(test_part=='test1' | test_part=='test2') %>%
+    group_by(subj_id) %>%
+    summarise(accuracy=mean(correct),
+            resp_bias=mean(resp),
+            slow_RT = quantile(RT,0.75)>5000,
+            RT=median(RT),
+            hit_rate = (sum(correct & present)+0.5)/(sum(present)+1),
+            fa_rate = (sum(!correct & !present)+0.5)/(sum(!present)+1),
+            d = qnorm(hit_rate)-qnorm(fa_rate),
+            c = -0.5*(qnorm(hit_rate)+qnorm(fa_rate)));
+```
+
+`r E5.raw_df%>%pull(subj_id)%>%unique()%>%length()` participants completed the task. Mean accuracy was `r E5.overall_descriptives%>%pull(accuracy)%>%mean()%>%printnum()` (SD=`r E5.overall_descriptives%>%pull(accuracy)%>%sd()%>%printnum()`). The mean median response time was `r printnum(E5.overall_descriptives%>%pull(RT)%>%mean()/1000)` seconds (SD=`r printnum(E5.overall_descriptives%>%pull(RT)%>%sd()/1000)`). `r E5.low_accuracy%>%length()` participants were excluded based on our pre-registered accuracy lower bound of 50%, one participant was excluded based on our pre-registered criterion for making hasty responses (RT\<100 ms in more than 25% of the trials). `r E5.too_slow%>%length()` participants were excluding for having response times longer than 5 seconds in more than 25% of the trials, leaving `r E5.df$subj_id%>%unique()%>%length()` for the main analysis. 
+
+
+```{r H1, echo=FALSE, cache=TRUE}
+
+E5.RT_by_resp <- E5.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100) %>%
+  group_by(subj_id,resp) %>%
+  summarise(RT=median(RT))%>%
+  spread(resp,RT,sep='')%>%
+  mutate(diff=respTRUE-respFALSE)
+```
+
+*Hypothesis 1 (PRESENCE/ABSENCE RESPONSE TIME)*: As expected, response times were significantly shorter in decisions about presence compared to absence (`r printnum(E5.RT_by_resp%>%pull(respTRUE)%>%mean()/1000)` vs `r printnum(E5.RT_by_resp%>%pull(respFALSE)%>%mean()/1000)` seconds; `r apa_print(E5.RT_by_resp%>%pull(diff)%>%t.test())$statistic`).
+
+
+```{r H2, echo=FALSE, cache=TRUE}
+
+E5.RT_by_context_in_presence <- E5.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100 & RT<5000  &resp) %>%
+  group_by(subj_id,cong) %>%
+  summarise(RT=median(RT))%>%
+  spread(cong,RT,sep='')%>%
+  mutate(diff=cong1-cong0);
+
+E5.RT_by_context_in_presence_correct_only <- E5.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100 & RT<5000  &resp & correct) %>%
+  group_by(subj_id,cong) %>%
+  summarise(RT=median(RT))%>%
+  spread(cong,RT,sep='')%>%
+  mutate(diff=cong1-cong0);
+```
+
+*Hypothesis 2 (CONTEXT RT EFFECT IN PRESENCE)*: Target-present decisions were significantly slower when the target was embedded in an incongruent context (`r printnum(E5.RT_by_context_in_presence_correct_only$cong0%>%mean()/1000)` vs `r printnum(E5.RT_by_context_in_presence_correct_only$cong1%>%mean()/1000)` seconds;  `r apa_print(E5.RT_by_context_in_presence_correct_only%>%pull(diff)%>%t.test())$statistic`).
+
+```{r H3, echo=FALSE, cache=TRUE}
+
+E5.RT_by_context_in_absence <- E5.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100 & RT<5000  &!resp) %>%
+  group_by(subj_id,cong) %>%
+  summarise(RT=median(RT))%>%
+  spread(cong,RT,sep='')%>%
+  mutate(diff=cong1-cong0);
+
+E5.RT_by_context_in_absence_correct_only <- E5.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100 & RT<5000  &!resp & correct) %>%
+  group_by(subj_id,cong) %>%
+  summarise(RT=median(RT))%>%
+  spread(cong,RT,sep='')%>%
+  mutate(diff=cong1-cong0);
+```
+
+*Hypothesis 3 (CONTEXT RT EFFECT IN ABSENCE)*: Target-absent decision times were unaffected by the context manipulation (`r printnum(E5.RT_by_context_in_absence_correct_only$cong0%>%mean()/1000)` vs `r printnum(E5.RT_by_context_in_absence_correct_only$cong1%>%mean()/1000)` seconds for the 2 and 6 rows conditions, respectively;  `r apa_print(E5.RT_by_context_in_absence_correct_only%>%pull(diff)%>%t.test())$statistic`).
+
+
+```{r H4, echo=FALSE, cache=TRUE}
+
+E5.RT_by_context_and_response <- merge(
+  E5.RT_by_context_in_presence,
+  E5.RT_by_context_in_absence,
+  by= 'subj_id',
+  suffixes = c('presence','absence')) %>%
+  mutate(interaction = diffpresence-diffabsence);
+
+E5.RT_by_context_and_response_correct_only <- merge(
+  E5.RT_by_context_in_presence_correct_only,
+  E5.RT_by_context_in_absence_correct_only,
+  by= 'subj_id',
+  suffixes = c('presence','absence')) %>%
+  mutate(interaction = diffpresence-diffabsence);
+```
+
+*Hypothesis 4 (CONTEXT RESPONSE INTERACTION ON RT)*: The effect of context on response time was stronger in decisions about target presence, compared to decisions about target absence (`r apa_print(E5.RT_by_context_and_response_correct_only%>%pull(interaction)%>%t.test())$statistic`).
+
+```{r quantiles, echo=FALSE, cache=TRUE, fig.cap="Response time quantiles 50, 75, 90 and 95 for correct decisions about presence and absence when the context is congruent versus incongruent with the target letter." }
+
+
+# a function to map the quantiles of target absent search times to
+# target present search times.
+getQuantiles <- function(pres,abs,probs) {
+  present = quantile(pres,probs)
+  absent = quantile(abs,probs)
+  return(data.frame(probs, present,absent))
+}
+
+
+E5.quantiles <- E5.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100 & RT<5000 & correct) %>%
+  group_by(subj_id,cong) %>%
+  summarise(getQuantiles(
+    RT[resp],
+    RT[!resp],
+    c(0.5,0.75,0.9,0.95)
+  )) %>%
+  pivot_longer(cols=c('present','absent'), names_to='resp', values_to='RT')
+
+E5.quantile_context_effects <- E5.quantiles %>%
+  group_by(subj_id, probs,resp) %>%
+  spread(cong, RT, sep='') %>%
+  mutate(diff=cong1-cong0) %>%
+  dplyr::select(subj_id,probs,diff)%>%
+  pivot_wider(names_from=resp,values_from=diff)
+
+E5.quantile_summary <- E5.quantiles %>% 
+  group_by(subj_id) %>%
+  mutate(centeredRT = RT-mean(RT))%>%
+  group_by(cong,probs, resp) %>%
+  summarise(mean_RT=mean(RT),
+            se_RT = se(centeredRT)) %>%
+  mutate(resp=factor(resp, levels=c('present','absent')),
+         cong=factor(cong,levels=c(1,0), labels=c('congruent','incongruent')))
+
+E5.quantile_plot <- E5.quantile_summary %>% 
+  ggplot(aes(x=cong, 
+             y=mean_RT, 
+             color=resp,
+             alpha=factor(probs),
+             group=probs)) +
+  geom_line(size=1.3)+
+  geom_errorbar(aes(ymin=mean_RT-se_RT,ymax=mean_RT+se_RT))+
+  scale_color_manual(values=c("#377eb8", "#E51a1c"))+
+  scale_alpha_manual(values=c(1,0.8,0.6,0.4))+
+  facet_grid(~resp)+
+  labs(x='context',
+       y='RT (ms)')+
+  theme_bw() +
+  theme(legend.pos='na')
+
+ggsave('figures/E5Quantiles_separate.png',E5.quantile_plot,width=3.5,height=3.5);
+
+E5.quantile_plot
+
+```
+
+```{r SDT, echo=FALSE, cache=TRUE}
+
+E5.descriptives_by_context<- E5.df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  mutate(resp = response==presence_key)%>%
+  group_by(subj_id,cong) %>%
+  summarise(accuracy=mean(correct),
+            resp_bias=mean(resp),
+            RT=median(RT),
+            hit_rate = (sum(correct & present)+0.5)/(sum(present)+1),
+            fa_rate = (sum(!correct & !present)+0.5)/(sum(!present)+1),
+            d = qnorm(hit_rate)-qnorm(fa_rate),
+            c = -0.5*(qnorm(hit_rate)+qnorm(fa_rate)))
+
+E5.dprime <- E5.descriptives_by_context%>%
+  dplyr::select(subj_id,cong,d)%>%
+  spread(cong, d,sep='')%>%
+  mutate(diff=cong1-cong0)
+
+E5.criterion<- E5.descriptives_by_context%>%
+  dplyr::select(subj_id,cong,c)%>%
+  spread(cong, c,sep='')%>%
+  mutate(diff=cong1-cong0)
+
+E5.hit_rate <- E5.descriptives_by_context%>%
+  dplyr::select(subj_id,cong,hit_rate)%>%
+  spread(cong, hit_rate,sep='')%>%
+  mutate(diff=cong1-cong0)
+
+E5.fa_rate <- E5.descriptives_by_context%>%
+  dplyr::select(subj_id,cong,fa_rate)%>%
+  spread(cong, fa_rate,sep='')%>%
+  mutate(diff=cong1-cong0)
+```
+
+*Hypothesis 5 (SENSITIVITY)*: Signal detection sensitivity was significantly impacted by context (`r apa_print(E5.dprime$diff%>%t.test())$statistic`), with d'=`r printnum(E5.dprime$cong1%>%mean())` (SD=`r printnum(E5.dprime$cong1%>%sd())`) when the context was congruent, and d'=`r printnum(E5.dprime$cong0%>%mean())` (SD=`r printnum(E5.dprime$cong0%>%sd())`) when it was incongruent relative to the target letter. This effect was driven by a increase in hit rate (`r apa_print(E5.hit_rate$diff%>%t.test())$statistic`), and a smaller increase in the false-positive rate (`r apa_print(E5.fa_rate$diff%>%t.test())$statistic`) when the context was congruent.
+
+*Hypothesis 6 (CRITERION)*: Signal detection criterion was conservative overall, and more conservative when the letter appeared in an incongruent context (`r apa_print(E5.criterion$diff%>%t.test())$statistic`), with c=`r printnum(E5.criterion$cong1%>%mean())` (SD=`r printnum(E5.criterion$cong1%>%sd())`) when the context was congruent, and `r printnum(E5.criterion$cong0%>%mean())` (SD=`r printnum(E5.criterion$cong0%>%sd())`) when it was incongruent. 
+
+```{r H7, echo=FALSE, cache=TRUE}
+
+E5.confidence_by_resp <- E5.df %>%
+  filter((test_part=='test1' | test_part=='test2')) %>%
+  group_by(subj_id,resp) %>%
+  summarise(confidence=mean(confidence, na.rm=T))%>%
+  spread(resp,confidence,sep='')%>%
+  mutate(diff=respTRUE-respFALSE)
+
+E5.confidence_by_resp_correct_only <- E5.df %>%
+  filter((test_part=='test1' | test_part=='test2') & correct) %>%
+  group_by(subj_id,resp) %>%
+  summarise(confidence=mean(confidence, na.rm=T))%>%
+  spread(resp,confidence,sep='')%>%
+  mutate(diff=respTRUE-respFALSE)
+```
+
+*Hypothesis 7 (PRESENCE/ABSENCE CONFIDENCE)*: Confidence was higher in decisions about presence compared to absence (`r printnum(E5.confidence_by_resp_correct_only%>%pull(respTRUE)%>%mean())` vs `r printnum(E5.confidence_by_resp_correct_only%>%pull(respFALSE)%>%mean())` on a 0-1 scale; `r apa_print(E5.confidence_by_resp_correct_only%>%pull(diff)%>%t.test())$statistic`).
+
+```{r H8, echo=FALSE, cache=TRUE}
+
+E5.confidence_by_context_in_presence <- E5.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100 & RT<5000  &resp) %>%
+  group_by(subj_id,cong) %>%
+  summarise(confidence=mean(confidence))%>%
+  spread(cong,confidence,sep='')%>%
+  mutate(diff=cong1-cong0);
+
+E5.confidence_by_context_in_presence_correct_only <- E5.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100 & RT<5000  &resp & correct) %>%
+  group_by(subj_id,cong) %>%
+  summarise(confidence=mean(confidence))%>%
+  spread(cong,confidence,sep='')%>%
+  mutate(diff=cong1-cong0);
+
+```
+
+*Hypothesis 8 (CONTEXT CONFIDENCE EFFECT IN PRESENCE)*: Confidence in decisions about presence was lower when the context was incongruent (`r printnum(E5.confidence_by_context_in_presence_correct_only$cong0%>%mean(na.rm=T))` vs. `r printnum(E5.confidence_by_context_in_presence_correct_only$cong1%>%mean(na.rm=T))`; `r apa_print(E5.confidence_by_context_in_presence_correct_only$diff%>%t.test())$statistic`). 
+
+
+```{r H9, echo=FALSE, cache=TRUE}
+
+
+E5.confidence_by_context_in_absence <- E5.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100 & RT<5000  &!resp) %>%
+  group_by(subj_id,cong) %>%
+  summarise(confidence=mean(confidence))%>%
+  spread(cong,confidence,sep='')%>%
+  mutate(diff=cong1-cong0);
+
+E5.confidence_by_context_in_absence_correct_only <- E5.df %>%
+  filter((test_part=='test1' | test_part=='test2') & RT>100 & RT<5000  &!resp & correct) %>%
+  group_by(subj_id,cong) %>%
+  summarise(confidence=mean(confidence))%>%
+  spread(cong,confidence,sep='')%>%
+  mutate(diff=cong1-cong0);
+
+```
+
+*Hypothesis 9 (CONTEXT CONFIDENCE EFFECT IN ABSENCE)*: Confidence in decisions about absence was also lower when more of the display was occluded (`r printnum(E5.confidence_by_context_in_absence_correct_only$cong0%>%mean(na.rm=T))` vs. `r printnum(E5.confidence_by_context_in_absence_correct_only$cong1%>%mean(na.rm=T))`; `r apa_print(E5.confidence_by_context_in_absence_correct_only$diff%>%t.test())$statistic`). 
+
+```{r H10, echo=FALSE, cache=TRUE}
+
+E5.confidence_by_context_and_response <- merge(
+  E5.confidence_by_context_in_presence,
+  E5.confidence_by_context_in_absence,
+  by= 'subj_id',
+  suffixes = c('presence','absence')) %>%
+  mutate(interaction = diffpresence-diffabsence);
+
+E5.confidence_by_context_and_response_correct_only <- merge(
+  E5.confidence_by_context_in_presence_correct_only,
+  E5.confidence_by_context_in_absence_correct_only,
+  by= 'subj_id',
+  suffixes = c('presence','absence')) %>%
+  mutate(interaction = diffpresence-diffabsence);
+```
+
+*Hypothesis 10 (CONTEXT RESPONSE INTERACTION ON CONFIDENCE)*: The effect of context on confidence was not significantly different in decisions about target presence and absence (`r apa_print(E5.confidence_by_context_and_response_correct_only%>%pull(interaction)%>%t.test())$statistic`).
+
+
+```{r confidence-plot, echo=FALSE, cache=TRUE, fig.cap="Mean confidence in correct decisions about presence and absence when 2 or 6 rows are occluded." }
+
+
+E5.confidence <- E5.df %>%
+  mutate(resp=factor(ifelse(resp,'present','absent'), 
+                     levels=c('present','absent')),
+         cong=factor(cong,labels=c('congruent','incongruent'))) %>%
+  filter((test_part=='test1' | test_part=='test2') & correct) %>%
+  group_by(subj_id,cong,resp) %>%
+  summarise(confidence=mean(confidence,na.rm=T)) 
+
+E5.confidence_summary <- E5.confidence %>%
+   group_by(cong,resp) %>%
+  summarise(mean_conf=mean(confidence, na.rm=T),
+            se_conf=se(confidence, na.rm=T))
+
+E5.confidence_plot <- E5.confidence %>% 
+  ggplot(aes(x=cong, 
+             y=confidence, 
+             color=resp)) +
+  geom_jitter(width=0.2,alpha=0.5, size=3)+
+  # geom_errorbar(aes(ymin=mean_RT-se_RT,ymax=mean_RT+se_RT))+
+  scale_color_manual(values=c("#377eb8", "#E51a1c"))+
+  facet_grid(~resp)+
+  geom_boxplot(fill='white',alpha=0.5, size=1, outlier.shape=NA)+
+  labs(x='number of hidden rows',
+       y='confidence')+
+  theme_classic() +
+  theme(legend.pos='na')
+
+ggsave('figures/E5confidence.png',E5.quantile_plot,width=3.5,height=3.5);
+
+E5.confidence_plot
+
+```
+
+## Exploratory analysis: first part only. 
+
+In the first part of the experiment participants haven't yet been exposed to confidence ratings, so we can see whether RT effects appear in the absence of confidence ratings. 
+
+
+```{r H1p1, echo=FALSE, cache=TRUE}
+
+E5.RT_by_resp_p1 <- E5.df %>%
+  filter((test_part=='test1') & RT>100) %>%
+  group_by(subj_id,resp) %>%
+  summarise(RT=median(RT))%>%
+  spread(resp,RT,sep='')%>%
+  mutate(diff=respTRUE-respFALSE)
+```
+
+*Hypothesis 1p1 (PRESENCE/ABSENCE RESPONSE TIME)*: As expected, response times were significantly shorter in decisions about presence compared to absence (`r printnum(E5.RT_by_resp_p1%>%pull(respTRUE)%>%mean()/1000)` vs `r printnum(E5.RT_by_resp_p1%>%pull(respFALSE)%>%mean()/1000)` seconds; `r apa_print(E5.RT_by_resp_p1%>%pull(diff)%>%t.test())$statistic`).
+
+```{r H2p1, echo=FALSE, cache=TRUE}
+
+E5.RT_by_context_in_presence_p1 <- E5.df %>%
+  filter((test_part=='test1') & RT>100 & RT<5000  &resp) %>%
+  group_by(subj_id,cong) %>%
+  summarise(RT=median(RT))%>%
+  spread(cong,RT,sep='')%>%
+  mutate(diff=cong1-cong0);
+
+E5.RT_by_context_in_presence_correct_only_p1 <- E5.df %>%
+  filter((test_part=='test1' ) & RT>100 & RT<5000  &resp & correct) %>%
+  group_by(subj_id,cong) %>%
+  summarise(RT=median(RT))%>%
+  spread(cong,RT,sep='')%>%
+  mutate(diff=cong1-cong0);
+```
+
+*Hypothesis 2p1 (CONTEXT RT EFFECT IN PRESENCE)*: Target-present decisions were significantly slower when more of the target was embedded in an incongruent context (`r printnum(E5.RT_by_context_in_presence_correct_only_p1$cong0%>%mean()/1000)` vs `r printnum(E5.RT_by_context_in_presence_correct_only_p1$cong1%>%mean()/1000)` seconds;  `r apa_print(E5.RT_by_context_in_presence_correct_only_p1%>%pull(diff)%>%t.test())$statistic`).
+
+```{r H3p1, echo=FALSE, cache=TRUE}
+
+E5.RT_by_context_in_absence_p1 <- E5.df %>%
+  filter((test_part=='test1') & RT>100 & RT<5000  &!resp) %>%
+  group_by(subj_id,cong) %>%
+  summarise(RT=median(RT))%>%
+  spread(cong,RT,sep='')%>%
+  mutate(diff=cong1-cong0);
+
+E5.RT_by_context_in_absence_correct_only_p1 <- E5.df %>%
+  filter((test_part=='test1') & RT>100 & RT<5000  &!resp & correct) %>%
+  group_by(subj_id,cong) %>%
+  summarise(RT=median(RT))%>%
+  spread(cong,RT,sep='')%>%
+  mutate(diff=cong1-cong0);
+```
+
+*Hypothesis 3p1 (CONTEXT RT EFFECT IN ABSENCE)*: Target-absent decision times were unaffected by the occlusion manipulation (`r printnum(E5.RT_by_context_in_absence_correct_only_p1$cong0%>%mean()/1000)` vs `r printnum(E5.RT_by_context_in_absence_correct_only_p1$cong1%>%mean()/1000)` seconds for the 2 and 6 rows conditions, respectively;  `r apa_print(E5.RT_by_context_in_absence_correct_only_p1%>%pull(diff)%>%t.test())$statistic`).
+
+
+```{r H4p1, echo=FALSE, cache=TRUE}
+
+E5.RT_by_context_and_response_p1 <- merge(
+  E5.RT_by_context_in_presence_p1,
+  E5.RT_by_context_in_absence_p1,
+  by= 'subj_id',
+  suffixes = c('presence','absence')) %>%
+  mutate(interaction = diffpresence-diffabsence);
+
+E5.RT_by_context_and_response_correct_only_p1 <- merge(
+  E5.RT_by_context_in_presence_correct_only_p1,
+  E5.RT_by_context_in_absence_correct_only_p1,
+  by= 'subj_id',
+  suffixes = c('presence','absence')) %>%
+  mutate(interaction = diffpresence-diffabsence);
+```
+
+*Hypothesis 4 (CONTEXT RESPONSE INTERACTION ON RT)*: The effect of occlusion on response time was stronger in decisions about target presence, compared to decisions about target absence (`r apa_print(E5.RT_by_context_and_response_correct_only_p1%>%pull(interaction)%>%t.test())$statistic`).
+
+```{r quantiles_p1, echo=FALSE, cache=TRUE, fig.cap="Response time quantiles 50, 75, 90 and 95 for correct decisions about presence and absence when 2 or 6 rows are occluded, first part only." }
+
+
+# a function to map the quantiles of target absent search times to
+# target present search times.
+getQuantiles <- function(pres,abs,probs) {
+  present = quantile(pres,probs)
+  absent = quantile(abs,probs)
+  return(data.frame(probs, present,absent))
+}
+
+
+E5.quantiles_p1 <- E5.df %>%
+  filter((test_part=='test1') & RT>100 & RT<5000 & correct) %>%
+  group_by(subj_id,cong) %>%
+  summarise(getQuantiles(
+    RT[resp],
+    RT[!resp],
+    c(0.5,0.75,0.9,0.95)
+  )) %>%
+  pivot_longer(cols=c('present','absent'), names_to='resp', values_to='RT')
+
+E5.quantile_context_effects_p1 <- E5.quantiles_p1 %>%
+  group_by(subj_id, probs,resp) %>%
+  spread(cong, RT, sep='') %>%
+  mutate(diff=cong1-cong0) %>%
+  dplyr::select(subj_id,probs,diff)%>%
+  pivot_wider(names_from=resp,values_from=diff)
+
+E5.quantile_summary_p1 <- E5.quantiles_p1 %>% 
+  group_by(subj_id) %>%
+  mutate(centeredRT = RT-mean(RT))%>%
+  group_by(cong,probs, resp) %>%
+  summarise(mean_RT=mean(RT, na.rm=T),
+            se_RT = se(centeredRT, na.rm=T)) %>%
+  mutate(resp=factor(resp, levels=c('present','absent')),
+         cong=factor(cong,levels=c(1,0), labels=c('congruent','incongruent')))
+
+E5.quantile_plot_p1 <- E5.quantile_summary_p1 %>% 
+  ggplot(aes(x=cong, 
+             y=mean_RT, 
+             color=resp,
+             alpha=factor(probs),
+             group=probs)) +
+  geom_line(size=1.3)+
+  geom_errorbar(aes(ymin=mean_RT-se_RT,ymax=mean_RT+se_RT))+
+  scale_color_manual(values=c("#377eb8", "#E51a1c"))+
+  scale_alpha_manual(values=c(1,0.8,0.6,0.4))+
+  facet_grid(~resp)+
+  labs(x='number of hidden rows',
+       y='RT (ms)')+
+  theme_bw() +
+  theme(legend.pos='na')
+
+ggsave('figures/E5Quantiles_separate_p1.png',E5.quantile_plot,width=3.5,height=3.5);
+
+E5.quantile_plot_p1
+
+```
+
+```{r SDT_p1, echo=FALSE, cache=TRUE}
+
+E5.descriptives_by_context_p1<- E5.df %>%
+  filter(test_part=='test1') %>%
+  mutate(resp = response==presence_key)%>%
+  group_by(subj_id,cong) %>%
+  summarise(accuracy=mean(correct),
+            resp_bias=mean(resp),
+            RT=median(RT),
+            hit_rate = (sum(correct & present)+0.5)/(sum(present)+1),
+            fa_rate = (sum(!correct & !present)+0.5)/(sum(!present)+1),
+            d = qnorm(hit_rate)-qnorm(fa_rate),
+            c = -0.5*(qnorm(hit_rate)+qnorm(fa_rate)))
+
+E5.dprime_p1 <- E5.descriptives_by_context_p1%>%
+  dplyr::select(subj_id,cong,d)%>%
+  spread(cong, d,sep='')%>%
+  mutate(diff=cong1-cong0)
+
+E5.criterion_p1<- E5.descriptives_by_context_p1%>%
+  dplyr::select(subj_id,cong,c)%>%
+  spread(cong, c,sep='')%>%
+  mutate(diff=cong1-cong0)
+
+E5.hit_rate_p1 <- E5.descriptives_by_context_p1%>%
+  dplyr::select(subj_id,cong,hit_rate)%>%
+  spread(cong, hit_rate,sep='')%>%
+  mutate(diff=cong1-cong0)
+
+E5.fa_rate_p1 <- E5.descriptives_by_context_p1%>%
+  dplyr::select(subj_id,cong,fa_rate)%>%
+  spread(cong, fa_rate,sep='')%>%
+  mutate(diff=cong1-cong0)
+```
+
+*Hypothesis 5p1 (SENSITIVITY)*: Signal detection sensitivity was significantly impacted by context (`r apa_print(E5.dprime_p1$diff%>%t.test())$statistic`), with d'=`r printnum(E5.dprime_p1$cong1%>%mean())` (SD=`r printnum(E5.dprime_p1$cong1%>%sd())`) when the context was congruent, and d'=`r printnum(E5.dprime_p1$cong0%>%mean())` (SD=`r printnum(E5.dprime_p1$cong0%>%sd())`) when it was incongruent relative to the target letter. This effect was driven by a decrease in hit rate (`r apa_print(E5.hit_rate_p1$diff%>%t.test())$statistic`), and a smaller decrease in the false-positive rate (`r apa_print(E5.fa_rate_p1$diff%>%t.test())$statistic`) when six rows were occluded.
+
+*Hypothesis 6p1 (CRITERION)*: Signal detection criterion was conservative overall, and more conservative when the letter appeared in an incongruent context (`r apa_print(E5.criterion_p1$diff%>%t.test())$statistic`), with c=`r printnum(E5.criterion_p1$cong1%>%mean())` (SD=`r printnum(E5.criterion_p1$cong1%>%sd())`) when the context was congruent, and `r printnum(E5.criterion_p1$cong0%>%mean())` (SD=`r printnum(E5.criterion_p1$cong0%>%sd())`) when it was incongruent. 
+
+```{r H7p1, echo=FALSE, cache=TRUE}
+
+E5.confidence_by_resp_p1 <- E5.df %>%
+  filter((test_part=='test1')) %>%
+  group_by(subj_id,resp) %>%
+  summarise(confidence=mean(confidence, na.rm=T))%>%
+  spread(resp,confidence,sep='')%>%
+  mutate(diff=respTRUE-respFALSE)
+
+E5.confidence_by_resp_correct_only_p1 <- E5.df %>%
+  filter((test_part=='test1') & correct) %>%
+  group_by(subj_id,resp) %>%
+  summarise(confidence=mean(confidence, na.rm=T))%>%
+  spread(resp,confidence,sep='')%>%
+  mutate(diff=respTRUE-respFALSE)
+```
+
+*Hypothesis 7p1 (PRESENCE/ABSENCE CONFIDENCE)*: Confidence was higher in decisions about presence compared to absence (`r printnum(E5.confidence_by_resp_correct_only_p1%>%pull(respTRUE)%>%mean())` vs `r printnum(E5.confidence_by_resp_correct_only_p1%>%pull(respFALSE)%>%mean())` on a 0-1 scale; `r apa_print(E5.confidence_by_resp_correct_only_p1%>%pull(diff)%>%t.test())$statistic`).
+
+```{r H8p1, echo=FALSE, cache=TRUE}
+
+E5.confidence_by_context_in_presence_p1 <- E5.df %>%
+  filter((test_part=='test1') & RT>100 & RT<5000  &resp) %>%
+  group_by(subj_id,cong) %>%
+  summarise(confidence=mean(confidence))%>%
+  spread(cong,confidence,sep='')%>%
+  mutate(diff=cong1-cong0);
+
+E5.confidence_by_context_in_presence_correct_only_p1 <- E5.df %>%
+  filter((test_part=='test1') & RT>100 & RT<5000  &resp & correct) %>%
+  group_by(subj_id,cong) %>%
+  summarise(confidence=mean(confidence))%>%
+  spread(cong,confidence,sep='')%>%
+  mutate(diff=cong1-cong0);
+
+```
+
+*Hypothesis 8p1 (CONTEXT CONFIDENCE EFFECT IN PRESENCE)*: Confidence in decisions about presence was lower when the context was incongruent (`r printnum(E5.confidence_by_context_in_presence_correct_only_p1$cong0%>%mean(na.rm=T))` vs. `r printnum(E5.confidence_by_context_in_presence_correct_only_p1$cong1%>%mean(na.rm=T))`; `r apa_print(E5.confidence_by_context_in_presence_correct_only_p1$diff%>%t.test())$statistic`). 
+
+
+```{r H9p1, echo=FALSE, cache=TRUE}
+
+
+E5.confidence_by_context_in_absence_p1 <- E5.df %>%
+  filter((test_part=='test1') & RT>100 & RT<5000  &!resp) %>%
+  group_by(subj_id,cong) %>%
+  summarise(confidence=mean(confidence))%>%
+  spread(cong,confidence,sep='')%>%
+  mutate(diff=cong1-cong0);
+
+E5.confidence_by_context_in_absence_correct_only_p1 <- E5.df %>%
+  filter((test_part=='test1' ) & RT>100 & RT<5000  &!resp & correct) %>%
+  group_by(subj_id,cong) %>%
+  summarise(confidence=mean(confidence))%>%
+  spread(cong,confidence,sep='')%>%
+  mutate(diff=cong1-cong0);
+
+```
+
+*Hypothesis 9 (CONTEXT CONFIDENCE EFFECT IN ABSENCE)*: Confidence in decisions about absence was also lower when more of the display was occluded (`r printnum(E5.confidence_by_context_in_absence_correct_only_p1$cong0%>%mean(na.rm=T))` vs. `r printnum(E5.confidence_by_context_in_absence_correct_only_p1$cong1%>%mean(na.rm=T))`; `r apa_print(E5.confidence_by_context_in_absence_correct_only_p1$diff%>%t.test())$statistic`). 
+
+```{r H10p1, echo=FALSE, cache=TRUE}
+
+E5.confidence_by_context_and_response_p1 <- merge(
+  E5.confidence_by_context_in_presence_p1,
+  E5.confidence_by_context_in_absence_p1,
+  by= 'subj_id',
+  suffixes = c('presence','absence')) %>%
+  mutate(interaction = diffpresence-diffabsence);
+
+E5.confidence_by_context_and_response_correct_only_p1 <- merge(
+  E5.confidence_by_context_in_presence_correct_only_p1,
+  E5.confidence_by_context_in_absence_correct_only_p1,
+  by= 'subj_id',
+  suffixes = c('presence','absence')) %>%
+  mutate(interaction = diffpresence-diffabsence);
+```
+
+*Hypothesis 10 (CONTEXT RESPONSE INTERACTION ON CONFIDENCE)*: The effect of context on confidence was not significantly different in decisions about target presence and absence (`r apa_print(E5.confidence_by_context_and_response_correct_only_p1%>%pull(interaction)%>%t.test())$statistic`).
+
+
+```{r confidence-plot_p1, echo=FALSE, cache=TRUE, fig.cap="Mean confidence in correct decisions about presence and absence when 2 or 6 rows are occluded." }
+
+
+E5.confidence_p1 <- E5.df %>%
+  mutate(resp=factor(ifelse(resp,'present','absent'), 
+                     levels=c('present','absent')),
+         cong=factor(cong,labels=c('congruent','incongruent'))) %>%
+  filter((test_part=='test1') & correct) %>%
+  group_by(subj_id,cong,resp) %>%
+  summarise(confidence=mean(confidence,na.rm=T)) 
+
+E5.confidence_summary_p1 <- E5.confidence_p1 %>%
+   group_by(cong,resp) %>%
+  summarise(mean_conf=mean(confidence, na.rm=T),
+            se_conf=se(confidence, na.rm=T))
+
+E5.confidence_plot_p1 <- E5.confidence_p1 %>% 
+  ggplot(aes(x=cong, 
+             y=confidence, 
+             color=resp)) +
+  geom_jitter(width=0.2,alpha=0.5, size=3)+
+  # geom_errorbar(aes(ymin=mean_RT-se_RT,ymax=mean_RT+se_RT))+
+  scale_color_manual(values=c("#377eb8", "#E51a1c"))+
+  facet_grid(~resp)+
+  geom_boxplot(fill='white',alpha=0.5, size=1, outlier.shape=NA)+
+  labs(x='number of hidden rows',
+       y='confidence')+
+  theme_classic() +
+  theme(legend.pos='na')
+
+ggsave('figures/E5confidencep1.png',E5.confidence_plot_p1,width=3.5,height=3.5);
+
+E5.confidence_plot_p1
+
+```
+

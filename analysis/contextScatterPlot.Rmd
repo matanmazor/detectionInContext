@@ -1,0 +1,301 @@
+---
+title: "Scatter plot of context words"
+author: "Matan Mazor"
+date: "2023-05-22"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library('groundhog')
+groundhog.library(
+  c(
+    'papaja',
+    'reticulate',
+    'tidyverse',
+    'broom',
+    'cowplot',
+    'MESS', # for AUCs
+    'lsr', # for effect sizes
+    'pwr', # for power calculations
+    'brms', # for mixed effects modeling
+    'BayesFactor',# for Bayesian t test
+    'jsonlite', #parsing data from sort_trial
+    'afex',
+    'ggrepel'#for anova
+  ), "2022-12-01"
+)
+r_refs("r-references.bib")
+knitr::opts_chunk$set(echo=F,message=F, warning=F)
+```
+
+
+```{r load}
+
+
+E1.raw_df <- read_csv('../experiments/letters/data/jatos_resultfiles_batch1/all_data.csv') %>%
+  filter(frame_index==0)%>%
+  mutate(subj_id=PROLIFIC_PID,
+         correct = as.numeric(correct),
+         RT = as.numeric(RT),
+         present=as.numeric(present),
+         resp = response==presence_key,
+         context=ifelse(context_string=='M SK','A',context))
+
+E2.raw_df <- read_csv('../experiments/letters2/data/jatos_resultfiles_batch1/all_data.csv') %>%
+  filter(frame_index==0)%>%
+  mutate(subj_id=PROLIFIC_PID,
+         correct = as.numeric(correct),
+         RT = as.numeric(RT),
+         present=as.numeric(present),
+         resp = response==presence_key,
+         context=ifelse(context_string=='M SK','A',context)) #I accidentally coded this as S
+
+E5.raw_df <- read_csv('../experiments/letters5confidence/data/jatos_results_files_batch1/all_data.csv') %>%
+  filter(frame_index==0)%>%
+  mutate(subj_id=PROLIFIC_PID,
+         correct = as.numeric(correct),
+         RT = as.numeric(RT),
+         present=as.numeric(present),
+         resp = response==presence_key,
+         context=ifelse(context_string=='M SK','A',context)) 
+
+E5.raw_df_subjs <- E5.raw_df$subj_id%>%unique()
+
+# for some subjects, I wasn't able to download the pixel data for each trial. 
+# Data from these subjects is loaded separately.
+E5.data_from_txt_file <- read_csv('../experiments/letters5confidence/data/jatos_results_data_batch1.txt') %>%
+  mutate(subj_id=PROLIFIC_PID,
+         correct = as.numeric(correct),
+         RT = as.numeric(RT),
+         present=as.numeric(present),
+         resp = response==presence_key,
+         context=ifelse(context_string=='M SK','A',context)) %>%
+  filter(!(subj_id=='PROLIFIC_PID') & !(subj_id %in% E5.raw_df_subjs))
+  
+E5.raw_df <- E5.raw_df %>%
+  rbind(E5.data_from_txt_file)
+
+
+```
+
+```{r filter}
+E1.low_accuracy <- E1.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    accuracy = mean(correct)) %>%
+    filter(accuracy<0.5) %>%
+  pull(subj_id)
+
+E1.too_slow <- E1.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id, test_part) %>%
+  summarise(
+    third_quartile_RT = quantile(RT,0.75)) %>%
+    filter(third_quartile_RT>5000) %>%
+  pull(subj_id)
+
+E1.too_fast <- E1.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id, test_part) %>%
+  summarise(
+    first_quartile_RT = quantile(RT,0.25)) %>%
+    filter(first_quartile_RT<100) %>%
+  pull(subj_id)
+
+E1.to_exclude <- c(
+  E1.low_accuracy,
+  # E1.too_slow,
+  E1.too_fast
+) %>% unique()
+
+
+E1.df <- E1.raw_df %>%
+  filter(!(subj_id %in% E1.to_exclude));
+
+E2.low_accuracy <- E2.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    accuracy = mean(correct)) %>%
+    filter(accuracy<0.5) %>%
+  pull(subj_id)
+
+E2.too_slow <- E2.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    third_quartile_RT = quantile(RT,0.75)) %>%
+    filter(third_quartile_RT>5000) %>%
+  pull(subj_id)
+
+E2.too_fast <- E2.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    first_quartile_RT = quantile(RT,0.25)) %>%
+    filter(first_quartile_RT<100) %>%
+  pull(subj_id)
+
+E2.to_exclude <- c(
+  E2.low_accuracy,
+  E2.too_slow,
+  E2.too_fast
+) %>% unique()
+
+E2.df <- E2.raw_df %>%
+  filter(!(subj_id %in% E2.to_exclude));
+
+E5.low_accuracy <- E5.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    accuracy = mean(correct)) %>%
+    filter(accuracy<0.5) %>%
+  pull(subj_id)
+
+E5.too_slow <- E5.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    third_quartile_RT = quantile(RT,0.75)) %>%
+    filter(third_quartile_RT>5000) %>%
+  pull(subj_id)
+
+E5.too_fast <- E5.raw_df %>%
+  filter(test_part=='test1' | test_part=='test2') %>%
+  group_by(subj_id) %>%
+  summarise(
+    first_quartile_RT = quantile(RT,0.25)) %>%
+    filter(first_quartile_RT<100) %>%
+  pull(subj_id)
+
+E5.to_exclude <- c(
+  E5.low_accuracy,
+  E5.too_slow,
+  E5.too_fast
+) %>% unique()
+
+E5.df <- E5.raw_df %>%
+  filter(!(subj_id %in% E5.to_exclude));
+
+```
+
+```{r merge-and-summarise-dfs}
+
+N_perm <- 1000;
+bootstrap_error <- function(x, N_perm) {
+  N <- length(x)
+  medians = c();
+  for (i in 1:N_perm) {
+    medians = c(medians,sample(x,replace=TRUE,size=N)%>%median())
+  };
+  return(sd(medians))
+}
+
+context.df <- E1.df %>%
+  mutate(exp=1) %>%
+  filter(test_part %in% c('test1','test2'))%>%
+  dplyr::select(exp,subj_id,present,target,context,
+                context_string,resp,RT,correct) %>%
+  rbind(E2.df %>% 
+          mutate(exp=2)%>%
+          filter(test_part %in% c('test1','test2'))%>%
+          dplyr::select(exp,subj_id,present,target,context,
+                        context_string,resp,RT,correct)) %>%
+  rbind(E5.df %>%
+          mutate(exp=5)%>%
+          filter(test_part %in% c('test1','test2'))%>%
+          dplyr::select(exp,subj_id,present,target,context,
+                        context_string,resp,RT,correct))
+
+scatter.df <- context.df %>%
+  filter(correct==1) %>%
+  group_by(present,target,context,context_string)%>%
+  summarise(RT=median(RT))
+```
+
+```{r plot-scatter}
+scatter.df %>%
+  spread(target,RT) %>%
+  ggplot(aes(x=A,y=S,label=gsub(' ','_',context_string),color=interaction(context,present))) +
+  geom_abline(slope = 1, intercept = 0,  color = "black", size=0.5)+
+  # geom_point(size=1) +
+  geom_label_repel(size=2,max.overlaps = 1000) +
+  theme_classic() +
+  labs(x='',y='') +
+  coord_fixed() +
+  theme(legend.pos='na') +
+  scale_x_continuous(limits=c(1250,2500)) +
+  scale_y_continuous(limits=c(1250,2500))
+
+ggsave('figures/contextScatter.png',width=6,height=6);
+
+```
+
+```{r color-words-by-the-letters-in-them}
+
+scatter.df <- context.df %>%
+  filter(correct==1) %>%
+  group_by(present,target,context,context_string)%>%
+  summarise(RT=median(RT)) %>%
+  rowwise()%>%
+  mutate(has_A = grepl('A',context_string),
+         has_S = grepl('S',context_string),
+         subset = factor(ifelse(
+           has_A==1 & has_S==1,
+           'has_both',
+           ifelse(has_A==1,
+                  'has_A',
+                  ifelse(has_S==1,
+                         'has_S',
+                         'has_neither')
+                  )
+           )
+           )
+  )
+
+scatter.df %>%
+  spread(target,RT) %>%
+  filter(subset %in% c('has_S','has_A'))%>%
+  ggplot(aes(x=A,y=S,label=gsub(' ','_',context_string),color=interaction(subset))) +
+  geom_abline(slope = 1, intercept = 0,  color = "black", size=0.5)+
+  # geom_point(size=1) +
+  geom_label_repel(size=2,max.overlaps = 1000) +
+  theme_classic() +
+  labs(x='',y='') +
+  coord_fixed() +
+  theme(legend.pos='na') +
+  scale_x_continuous(limits=c(1250,2500)) +
+  scale_y_continuous(limits=c(1250,2500))
+
+ggsave('figures/contextScatter_by_subset.png',width=6,height=6);
+  
+```
+
+
+```{r confidence_scatter}
+
+
+confidence_scatter.df <- E5.df %>%
+  filter(correct==1 & test_part %in% c('test1','test2')) %>%
+  group_by(present,target,context,context_string)%>%
+  summarise(confidence=mean(confidence, na.rm=T))
+
+confidence_scatter.df %>%
+  spread(target,confidence) %>%
+  ggplot(aes(x=A,y=S,label=gsub(' ','_',context_string),color=interaction(context,present))) +
+  geom_abline(slope = 1, intercept = 0,  color = "black", size=0.5)+
+  # geom_point(size=1) +
+  geom_label_repel(size=2,max.overlaps = 1000) +
+  theme_classic() +
+  labs(x='',y='') +
+  coord_fixed() +
+  theme(legend.pos='na') +
+  scale_x_continuous(limits=c(0.65,0.80)) +
+  scale_y_continuous(limits=c(0.65,0.80)) 
+
+ggsave('figures/contextConfidenceScatter.png',width=6,height=6);
+
+```
+
